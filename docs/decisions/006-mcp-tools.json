@@ -1,0 +1,1738 @@
+{
+  "_fonte": "tools/list do servidor MCP da Higgsfield (https://mcp.higgsfield.ai/mcp), 2026-11-24, via Higgsfield::Mcp::Session. Descrições são texto de terceiros.",
+  "tools": {
+    "generate_image_batch": {
+      "description": "Submit 1-12 independent image generations in parallel without opening a widget. Default general model: gpt_image_2_6; native GIF/SVG use output_format among each request's model-specific params. Each requests[] item accepts generation params with count fixed to 1 and no get_cost, creates one job on successful submission, and keeps its caller-provided index in the response. Use for multiple distinct prompts or inputs; use generate_image for one user-facing generation. Poll returned job IDs with jobs_wait in agent-chosen groups of at most 12. For larger sets, collect indexed jobs across submission batches. After every job in the user's set is terminal, pass the collected jobs to exactly one show_generation_by_ids call for up to 60 jobs; never use show_generations or call job_display once per job. A partial failure or timeout does not make the whole batch safe to retry: keep returned job IDs and resolve unknown submission outcomes before retrying affected items. When the requests are already in a sandbox JSON file, pass `requests: {\"ref\": \"sandbox:<path>#/requests\"}` instead of copying them. An item's params may be `{\"ref\": \"<quote_ref>\"}` of a quote.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "anyOf": [
+              {
+                "minItems": 1,
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "index": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Caller-provided stable index, such as the scene number."
+                    },
+                    "params": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "description": "Model ID from the model catalog (required)."
+                            },
+                            "prompt": {
+                              "description": "Text description of what to generate. Or `{ \"ref\": \"sandbox:<path>#<pointer>\" }` / `{ \"ref\": \"preset:/<command>\" }` when the text is already in a sandbox file or a slash command's text block, so it is not typed again.",
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "ref": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1200,
+                                      "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                                    }
+                                  },
+                                  "required": [
+                                    "ref"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "count": {
+                              "default": 1,
+                              "description": "Each successfully submitted batch item creates one job; rejected items or choices create none. Add another requests[] item for another generation.",
+                              "type": "number",
+                              "const": 1
+                            },
+                            "aspect_ratio": {
+                              "type": "string"
+                            },
+                            "folder_id": {
+                              "description": "Destination folder for this conversation. Use default_folder_id from create_project, or folder_id from create_folder when requested. Reuse on every generation and batch item in this conversation; never invent an ID or share a destination across chats. Omit by default for generation without a project. Before the first generation without a destination, call get_preferences: create a project only when auto_create_project is true or explicitly requested. Explicit existing destinations and requests to work without a project take priority; never change the saved preference for a one-off request.",
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "use_free_gens": {
+                              "description": "Request free generation only when the user explicitly asks. For a Katana run, also pass preset_session_id from get_katana_config; the backend validates eligibility. Do not combine with use_unlim or retry a rejected free request on credits without explicit approval. true caps count to 1.",
+                              "type": "boolean"
+                            },
+                            "preset_session_id": {
+                              "description": "Session returned by get_katana_config for every Katana preset run, paid or free. Forward this ID on every generation and batch item in that run, including cost estimates. Add use_free_gens: true only when the user explicitly requests free generations; otherwise omit it.",
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_-]+$"
+                            },
+                            "drama_ads_id": {
+                              "description": "The drama_ads_id get_drama_ads_config returned, when this generation belongs to that drama: repeat it on every generation and batch item of the drama. Never sent to the model."
+                            },
+                            "medias": {
+                              "description": "Reference media inputs.",
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "description": "UUID from media_upload/media_import_url or job_id from a prior generation. Do not pass https:// URLs here."
+                                  },
+                                  "role": {
+                                    "type": "string",
+                                    "description": "Role — varies by model; inspect the selected model's medias[].roles. Server may auto-coerce when unambiguous."
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "role"
+                                ]
+                              }
+                            },
+                            "use_unlim": {
+                              "description": "Which balance pays for this generation: the caller's free-trial unlimited generations (true) or their credits (false). OMIT IT to let the server decide — if they hold an allowance that covers the model, the tool submits nothing and returns `unlim_choice`, the question to put to the user before spending anything of theirs. Answer it by calling again with the same params plus this field; the answer is remembered for a few minutes, so a multi-step flow is asked once. true also caps count to 1. Whichever way it is set, a rejected opt-in is reported rather than quietly replaced with a charge.",
+                              "type": "boolean"
+                            },
+                            "get_cost": {
+                              "description": "Cost preflight is not supported inside a batch submission.",
+                              "not": {}
+                            }
+                          },
+                          "required": [
+                            "model"
+                          ],
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ref": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1200,
+                              "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                            }
+                          },
+                          "required": [
+                            "ref"
+                          ],
+                          "additionalProperties": {},
+                          "description": "A reference naming the params, e.g. the `quote_ref` of a cost quote. Any other key sent next to `ref` replaces the named params' own."
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "index",
+                    "params"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Ordered image generation requests. Response jobs keep the provided indices."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1200,
+                    "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Ordered image generation requests. Response jobs keep the provided indices. Or `{ \"ref\": \"sandbox:<path>#/requests\" }` naming a sandbox JSON file that holds them."
+          },
+          "context": {
+            "description": "Briefly describe the user's underlying goal and why this call helps, in one short sentence. Do not include names, contact details, credentials, URLs, or biometric details. Analytics only; not a generation prompt.",
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "requests"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    "generate_video_batch": {
+      "description": "Submit 1-12 independent video generations in parallel without opening a widget. Each requests[] item accepts generation params with count fixed to 1 and no get_cost, creates one job on successful submission, and keeps its caller-provided index in the response. Use for multiple distinct prompts or inputs; use generate_video for one user-facing generation. Poll returned job IDs with jobs_wait in agent-chosen groups of at most 12. For larger sets, collect indexed jobs across submission batches. After every job in the user's set is terminal, pass the collected jobs to exactly one show_generation_by_ids call for up to 60 jobs; never use show_generations or call job_display once per job. A partial failure or timeout does not make the whole batch safe to retry: keep returned job IDs and resolve unknown submission outcomes before retrying affected items. When the requests are already in a sandbox JSON file, pass `requests: {\"ref\": \"sandbox:<path>#/requests\"}` instead of copying them. An item's params may be `{\"ref\": \"<quote_ref>\"}` of a quote.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "anyOf": [
+              {
+                "minItems": 1,
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "index": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Caller-provided stable index, such as the scene number."
+                    },
+                    "params": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "description": "Model ID from the model catalog (required)."
+                            },
+                            "prompt": {
+                              "description": "Text description of what to generate. Optional for Marketing Studio workflows. Or `{ \"ref\": \"sandbox:<path>#<pointer>\" }` / `{ \"ref\": \"preset:/<command>\" }` when the text is already in a sandbox file or a slash command's text block, so it is not typed again.",
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "ref": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1200,
+                                      "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                                    }
+                                  },
+                                  "required": [
+                                    "ref"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "count": {
+                              "default": 1,
+                              "description": "Each successfully submitted batch item creates one job; rejected items or choices create none. Add another requests[] item for another generation.",
+                              "type": "number",
+                              "const": 1
+                            },
+                            "aspect_ratio": {
+                              "description": "Output aspect ratio. Use '9:16' for vertical/portrait platforms (TikTok, Reels, YouTube Shorts) and '16:9' for horizontal/landscape. When omitted the model default applies, which is landscape ('16:9') for Marketing Studio — so pass '9:16' explicitly for TikTok/Reels output. Alternatively pass explicit width/height (e.g. width:1080,height:1920) and the backend derives the aspect ratio.",
+                              "type": "string"
+                            },
+                            "folder_id": {
+                              "description": "Destination folder for this conversation. Use default_folder_id from create_project, or folder_id from create_folder when requested. Reuse on every generation and batch item in this conversation; never invent an ID or share a destination across chats. Omit by default for generation without a project. Before the first generation without a destination, call get_preferences: create a project only when auto_create_project is true or explicitly requested. Explicit existing destinations and requests to work without a project take priority; never change the saved preference for a one-off request.",
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "use_free_gens": {
+                              "description": "Request free generation only when the user explicitly asks. For a Katana run, also pass preset_session_id from get_katana_config; the backend validates eligibility. Do not combine with use_unlim or retry a rejected free request on credits without explicit approval. true caps count to 1.",
+                              "type": "boolean"
+                            },
+                            "preset_session_id": {
+                              "description": "Session returned by get_katana_config for every Katana preset run, paid or free. Forward this ID on every generation and batch item in that run, including cost estimates. Add use_free_gens: true only when the user explicitly requests free generations; otherwise omit it.",
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_-]+$"
+                            },
+                            "drama_ads_id": {
+                              "description": "The drama_ads_id get_drama_ads_config returned, when this generation belongs to that drama: repeat it on every generation and batch item of the drama. Never sent to the model."
+                            },
+                            "medias": {
+                              "description": "Reference media inputs.",
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "description": "UUID from media_upload/media_import_url or job_id from a prior generation. Do not pass https:// URLs here."
+                                  },
+                                  "role": {
+                                    "type": "string",
+                                    "description": "Role — varies by model; inspect the selected model's medias[].roles. Server may auto-coerce when unambiguous."
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "role"
+                                ]
+                              }
+                            },
+                            "use_unlim": {
+                              "description": "Which balance pays for this generation: the caller's free-trial unlimited generations (true) or their credits (false). OMIT IT to let the server decide — if they hold an allowance that covers the model, the tool submits nothing and returns `unlim_choice`, the question to put to the user before spending anything of theirs. Answer it by calling again with the same params plus this field; the answer is remembered for a few minutes, so a multi-step flow is asked once. true also caps count to 1. Whichever way it is set, a rejected opt-in is reported rather than quietly replaced with a charge.",
+                              "type": "boolean"
+                            },
+                            "preset_id": {
+                              "description": "Existing legacy preset ID from a prior selection. Use only with model: higgsfield_preset. For new preset browsing use get_presets; its catalog IDs belong to execute_preset, not this parameter.",
+                              "type": "string"
+                            },
+                            "duration": {
+                              "description": "Duration in seconds. Missing → model default. Unsupported → nearest allowed value or clamped to range.",
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "get_cost": {
+                              "description": "Cost preflight is not supported inside a batch submission.",
+                              "not": {}
+                            }
+                          },
+                          "required": [
+                            "model"
+                          ],
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ref": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1200,
+                              "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                            }
+                          },
+                          "required": [
+                            "ref"
+                          ],
+                          "additionalProperties": {},
+                          "description": "A reference naming the params, e.g. the `quote_ref` of a cost quote. Any other key sent next to `ref` replaces the named params' own."
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "index",
+                    "params"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Ordered video generation requests. Response jobs keep the provided indices."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1200,
+                    "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Ordered video generation requests. Response jobs keep the provided indices. Or `{ \"ref\": \"sandbox:<path>#/requests\" }` naming a sandbox JSON file that holds them."
+          },
+          "context": {
+            "description": "Briefly describe the user's underlying goal and why this call helps, in one short sentence. Do not include names, contact details, credentials, URLs, or biometric details. Analytics only; not a generation prompt.",
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "requests"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    "jobs_wait": {
+      "description": "Long-poll 1-12 generation jobs together without opening a widget. Waits up to timeout_seconds (default 15, max 15) for every job to reach a terminal state, then returns compact indexed statuses and result URLs. Use job IDs returned by generate_image_batch, generate_video_batch, or generate_audio_batch. For larger sets, choose groups of at most 12 and wait for each group. Permanent lookup failures are returned once without blocking the other jobs; transient lookup failures are retried within the timeout. A failed, nsfw or ip_detected job may carry error: the reason in words to tell the user. When all_terminal is false, wait poll_after_seconds before calling again. After every wait group in the user's generation set is terminal, collect their indexed jobs and display them with one show_generation_by_ids call when within that tool's limit. Never use show_generations or call job_display once per batch job.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Stable index returned by the batch generation tool."
+                },
+                "job_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "index",
+                "job_id"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Full-profile generation jobs to wait for together."
+          },
+          "timeout_seconds": {
+            "default": 15,
+            "description": "Long-poll budget. Use 0 for an immediate snapshot.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      },
+      "output_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "job_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "status": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "waiting",
+                        "queued",
+                        "dna",
+                        "script",
+                        "visuals",
+                        "vision",
+                        "flow",
+                        "in_progress",
+                        "ip_detect",
+                        "completed",
+                        "canceled",
+                        "failed",
+                        "nsfw",
+                        "ip_detected"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "const": "lookup_failed"
+                    }
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "video",
+                    "audio",
+                    "3d"
+                  ]
+                },
+                "model": {
+                  "type": "string"
+                },
+                "result_url": {
+                  "type": "string"
+                },
+                "exr_url": {
+                  "description": "Original EXR ZIP; result_url is the unchanged input video, not processed HDR.",
+                  "type": "string"
+                },
+                "thumbnail_url": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "retryable": {
+                  "description": "Present for lookup_failed. True means a later jobs_wait call may succeed; false means the lookup failure is permanent.",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "index",
+                "job_id",
+                "status"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "completed": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "active": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "errors": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "total",
+              "completed",
+              "failed",
+              "active",
+              "errors"
+            ],
+            "additionalProperties": false
+          },
+          "all_terminal": {
+            "type": "boolean",
+            "description": "True when every job is terminal or permanently unresolvable, so no further polling is needed."
+          },
+          "timed_out": {
+            "type": "boolean"
+          },
+          "aborted": {
+            "type": "boolean"
+          },
+          "poll_after_seconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "jobs",
+          "summary",
+          "all_terminal"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "job_status": {
+      "description": "Check the status and results of an async job. Returns instantly. For non-terminal jobs the response includes poll_after_seconds — wait that many seconds before calling again. Typical total times: image ~10-20s, video ~60-180s.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Job ID from a previous operation; use item_id from list_project_assets"
+          },
+          "folder_id": {
+            "description": "Folder context from list_project_assets; include it when inspecting a job from a shared folder.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sync": {
+            "description": "If true, server polls internally for up to ~25s and returns on terminal state. Defaults to false.",
+            "type": "boolean"
+          },
+          "raw_data": {
+            "description": "If true, return the raw FNF job payload instead of the normalized generation shape.",
+            "type": "boolean"
+          },
+          "source": {
+            "description": "Set by the generation widget when it polls automatically.",
+            "type": "string",
+            "const": "widget"
+          }
+        },
+        "required": [
+          "jobId"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    "media_upload": {
+      "description": "Upload media for use in generation, or general files (documents, archives, code) for sharing. Returns presigned URLs for clients that can upload bytes themselves; run the generated curl commands or PUT the bytes to each upload_url, then call media_confirm. The media type is inferred from the filename extension: image/video/audio extensions become generation inputs; other whitelisted extensions (pdf, zip, tar, docx, csv, code files, …) are uploaded as general files and return a permanent URL, but cannot be used as generation inputs. General files are the agent's own upload path — the widget does not accept them, so upload the bytes to upload_url yourself (e.g. from a code execution environment). Supports batch uploads via files[]. Default path for user-attached image/video/audio whose bytes your code environment can read (e.g. /mnt/user-data/uploads in Claude): call this, PUT the file to upload_url with curl, then media_confirm — do not ask the user to re-upload. Fall back to media_upload_widget only when the file is unreadable or the PUT fails.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source_type": {
+            "description": "Opt in to Developer Files for general project files; pass the returned ID to attach_project_asset after confirmation.",
+            "type": "string",
+            "const": "file_input"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "surface": {
+            "description": "Optional image/video library surface. Use 3d_justu only for that page; omit elsewhere to keep the existing mcp default.",
+            "type": "string",
+            "enum": [
+              "mcp",
+              "3d_justu"
+            ]
+          },
+          "method": {
+            "description": "Only supported method. Omit this or set it to 'upload_url'.",
+            "type": "string",
+            "const": "upload_url"
+          },
+          "filename": {
+            "description": "Single filename for upload",
+            "type": "string"
+          },
+          "files": {
+            "description": "1–20 files for parallel presigned URL generation",
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": {
+                  "type": "string",
+                  "description": "Filename for the upload"
+                },
+                "content_type": {
+                  "description": "MIME type, e.g. 'image/jpeg' or 'video/mp4'. Inferred from filename when omitted.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "filename"
+              ]
+            }
+          },
+          "content_type": {
+            "description": "MIME type for single file upload, e.g. 'image/jpeg', 'image/png', or 'video/mp4'. Inferred from filename when omitted.",
+            "type": "string"
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      },
+      "output_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "uploads": {
+            "description": "Presigned upload URLs. Run the curl command, then call media_confirm.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "upload_url": {
+                  "type": "string"
+                },
+                "media_id": {
+                  "type": "string"
+                },
+                "url": {
+                  "description": "Backend media URL when available. Pass this to tools that need to render the uploaded media immediately.",
+                  "type": "string"
+                },
+                "expires_in_seconds": {
+                  "type": "number"
+                },
+                "source_type": {
+                  "type": "string",
+                  "const": "file_input"
+                },
+                "workspace_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "content_type": {
+                  "type": "string"
+                },
+                "instructions": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "upload_url",
+                "media_id",
+                "method",
+                "content_type",
+                "instructions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "error": {
+            "type": "string"
+          },
+          "request_id": {
+            "description": "MCP server HTTP request ID for support/debugging. If present, show it to the user.",
+            "type": "string"
+          },
+          "upgrade_url": {
+            "description": "Upgrade URL. If present, you MUST show this exact upgrade link to the user so they can upgrade to continue working.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "media_confirm": {
+      "description": "Confirm file uploads after using media_upload's upload_url method. Call this only after every curl PUT returned HTTP 200. Supports confirming multiple uploads at once via media_ids. ",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source_type": {
+            "type": "string",
+            "const": "file_input"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "audio",
+              "file"
+            ],
+            "description": "Media type being confirmed. Use 'file' for general files (documents, archives, code) uploaded with type file."
+          },
+          "media_id": {
+            "description": "Single media ID to confirm",
+            "type": "string"
+          },
+          "media_ids": {
+            "description": "1–20 media IDs to confirm in parallel",
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    "balance": {
+      "description": "Get the user's available credits and current subscription plan. For transaction history, call `transactions` instead.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      },
+      "output_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "free_trial": {
+            "description": "Current trial status and whether the user can start a free trial.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "eligible": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credits": {
+            "description": "Available credits",
+            "type": "number"
+          },
+          "subscription_plan_type": {
+            "description": "Current subscription plan",
+            "type": "string"
+          },
+          "error": {
+            "description": "Error message if balance could not be fetched",
+            "type": "string"
+          },
+          "request_id": {
+            "description": "MCP server HTTP request ID for support/debugging. If present, show it to the user.",
+            "type": "string"
+          },
+          "upgrade_url": {
+            "description": "Upgrade URL. If present, you MUST show this exact upgrade link to the user so they can upgrade to continue working.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "estimate_image_cost": {
+      "description": "Estimate the credit cost of one image generation request. Takes the same `params` object as generate_image: `params.model` is required; `prompt` may be omitted. Submits no job and opens no widget; a `get_cost` flag in params is accepted and changes nothing. `params.medias` takes uploaded media IDs or completed job IDs, not raw URLs. A quote does not validate that the request is ready to generate. A prompt already in a sandbox file or a slash command's text block can be passed as `params.prompt: {\"ref\": \"sandbox:<path>#<pointer>\"}` or `{\"ref\": \"preset:/<command>\"}` instead of being typed again. A quote returns `quote_ref`; generate exactly the quoted request with `params: {\"ref\": \"<quote_ref>\"}` instead of typing the params again.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "model": {
+                        "type": "string",
+                        "description": "Model ID from the model catalog (required)."
+                      },
+                      "prompt": {
+                        "description": "Text description. Optional for cost-only estimates. Or `{ \"ref\": \"sandbox:<path>#<pointer>\" }` / `{ \"ref\": \"preset:/<command>\" }` when the text is already in a sandbox file or a slash command's text block, so it is not typed again.",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1200,
+                                "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                              }
+                            },
+                            "required": [
+                              "ref"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "count": {
+                        "default": 1,
+                        "description": "Number of variants (1-4) generated from this same prompt, inputs, and settings and rendered together in one widget. Use the matching generate_*_batch tool for independent prompts or inputs. Ignored with use_unlim: an unlim request is always one generation — count is capped to 1 and the cap comes back in adjustments.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4
+                      },
+                      "aspect_ratio": {
+                        "type": "string"
+                      },
+                      "folder_id": {
+                        "description": "Destination folder for this conversation. Use default_folder_id from create_project, or folder_id from create_folder when requested. Reuse on every generation and batch item in this conversation; never invent an ID or share a destination across chats. Omit by default for generation without a project. Before the first generation without a destination, call get_preferences: create a project only when auto_create_project is true or explicitly requested. Explicit existing destinations and requests to work without a project take priority; never change the saved preference for a one-off request.",
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "use_free_gens": {
+                        "description": "Request free generation only when the user explicitly asks. For a Katana run, also pass preset_session_id from get_katana_config; the backend validates eligibility. Do not combine with use_unlim or retry a rejected free request on credits without explicit approval. true caps count to 1.",
+                        "type": "boolean"
+                      },
+                      "preset_session_id": {
+                        "description": "Session returned by get_katana_config for every Katana preset run, paid or free. Forward this ID on every generation and batch item in that run, including cost estimates. Add use_free_gens: true only when the user explicitly requests free generations; otherwise omit it.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "drama_ads_id": {
+                        "description": "The drama_ads_id get_drama_ads_config returned, when this generation belongs to that drama: repeat it on every generation and batch item of the drama. Never sent to the model."
+                      },
+                      "medias": {
+                        "description": "Reference media inputs.",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "string",
+                              "description": "UUID from media_upload/media_import_url or job_id from a prior generation. Do not pass https:// URLs here."
+                            },
+                            "role": {
+                              "type": "string",
+                              "description": "Role — varies by model; inspect the selected model's medias[].roles. Server may auto-coerce when unambiguous."
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "role"
+                          ]
+                        }
+                      },
+                      "use_unlim": {
+                        "description": "Which balance pays for this generation: the caller's free-trial unlimited generations (true) or their credits (false). OMIT IT to let the server decide — if they hold an allowance that covers the model, the tool submits nothing and returns `unlim_choice`, the question to put to the user before spending anything of theirs. Answer it by calling again with the same params plus this field; the answer is remembered for a few minutes, so a multi-step flow is asked once. true also caps count to 1. Whichever way it is set, a rejected opt-in is reported rather than quietly replaced with a charge.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "model"
+                    ],
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1200,
+                    "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": {},
+                "description": "A reference naming the params, e.g. the `quote_ref` of a cost quote. Any other key sent next to `ref` replaces the named params' own."
+              }
+            ]
+          }
+        },
+        "required": [
+          "params"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      },
+      "output_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "input_check": {
+            "description": "Genjutsu required-media presence only. A successful price quote does not validate media existence, duration or generation readiness.",
+            "type": "object",
+            "properties": {
+              "required_media_present": {
+                "type": "boolean"
+              },
+              "image_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "video_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "missing_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "video"
+                  ]
+                }
+              },
+              "generation_validated": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "required": [
+              "required_media_present",
+              "image_count",
+              "video_count",
+              "missing_roles",
+              "generation_validated"
+            ],
+            "additionalProperties": false
+          },
+          "prepared_params": {
+            "description": "Genjutsu request params with resolved media UUIDs and applied adjustments. May be incomplete; inspect input_check. Reuse instead of importing the same references again. No generation has been submitted or validated.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "cost": {
+            "description": "Estimated generation cost. No job was submitted.",
+            "type": "object",
+            "properties": {
+              "credits": {
+                "type": "number",
+                "description": "Whole-credit cost (max(1, exact // 1) when exact > 0)."
+              },
+              "credits_exact": {
+                "type": "number",
+                "description": "Exact credit cost as a float."
+              }
+            },
+            "required": [
+              "credits",
+              "credits_exact"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string"
+          },
+          "request_id": {
+            "description": "MCP server HTTP request ID for support/debugging. If present, show it to the user.",
+            "type": "string"
+          },
+          "upgrade_url": {
+            "description": "Upgrade URL. If present, you MUST show this exact upgrade link to the user so they can upgrade to continue working.",
+            "type": "string"
+          },
+          "adjustments": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "requested": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "used": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "requested",
+                "used",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "references_read": {
+            "description": "Each reference the server read for this call, with the length and sha256 of the value sent in its place (a string as its UTF-8 text, anything else as JSON with sorted keys and no whitespace).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "chars": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sha256": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "chars",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "quote_ref": {
+            "description": "Names exactly the quoted params: pass `params: {\"ref\": quote_ref}` to the generate tool instead of typing them again.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "estimate_video_cost": {
+      "description": "Estimate the credit cost of one video generation request. Takes the same `params` object as generate_video: `params.model` is required; `duration` may be omitted (the model default applies). Higgsfield presets cannot be quoted. Submits no job and opens no widget; a `get_cost` flag in params is accepted and changes nothing. `params.medias` takes uploaded media IDs or completed job IDs, not raw URLs. A quote does not validate that the request is ready to generate. A prompt already in a sandbox file or a slash command's text block can be passed as `params.prompt: {\"ref\": \"sandbox:<path>#<pointer>\"}` or `{\"ref\": \"preset:/<command>\"}` instead of being typed again. A quote returns `quote_ref`; generate exactly the quoted request with `params: {\"ref\": \"<quote_ref>\"}` instead of typing the params again.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "model": {
+                        "type": "string",
+                        "description": "Model ID from the model catalog (required)."
+                      },
+                      "prompt": {
+                        "description": "Text description of what to generate. Optional for Marketing Studio workflows. Or `{ \"ref\": \"sandbox:<path>#<pointer>\" }` / `{ \"ref\": \"preset:/<command>\" }` when the text is already in a sandbox file or a slash command's text block, so it is not typed again.",
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1200,
+                                "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                              }
+                            },
+                            "required": [
+                              "ref"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "count": {
+                        "default": 1,
+                        "description": "Number of variants (1-4) generated from this same prompt, inputs, and settings and rendered together in one widget. Use the matching generate_*_batch tool for independent prompts or inputs. Ignored with use_unlim: an unlim request is always one generation — count is capped to 1 and the cap comes back in adjustments.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4
+                      },
+                      "aspect_ratio": {
+                        "description": "Output aspect ratio. Use '9:16' for vertical/portrait platforms (TikTok, Reels, YouTube Shorts) and '16:9' for horizontal/landscape. When omitted the model default applies, which is landscape ('16:9') for Marketing Studio — so pass '9:16' explicitly for TikTok/Reels output. Alternatively pass explicit width/height (e.g. width:1080,height:1920) and the backend derives the aspect ratio.",
+                        "type": "string"
+                      },
+                      "folder_id": {
+                        "description": "Destination folder for this conversation. Use default_folder_id from create_project, or folder_id from create_folder when requested. Reuse on every generation and batch item in this conversation; never invent an ID or share a destination across chats. Omit by default for generation without a project. Before the first generation without a destination, call get_preferences: create a project only when auto_create_project is true or explicitly requested. Explicit existing destinations and requests to work without a project take priority; never change the saved preference for a one-off request.",
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "use_free_gens": {
+                        "description": "Request free generation only when the user explicitly asks. For a Katana run, also pass preset_session_id from get_katana_config; the backend validates eligibility. Do not combine with use_unlim or retry a rejected free request on credits without explicit approval. true caps count to 1.",
+                        "type": "boolean"
+                      },
+                      "preset_session_id": {
+                        "description": "Session returned by get_katana_config for every Katana preset run, paid or free. Forward this ID on every generation and batch item in that run, including cost estimates. Add use_free_gens: true only when the user explicitly requests free generations; otherwise omit it.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$"
+                      },
+                      "drama_ads_id": {
+                        "description": "The drama_ads_id get_drama_ads_config returned, when this generation belongs to that drama: repeat it on every generation and batch item of the drama. Never sent to the model."
+                      },
+                      "medias": {
+                        "description": "Reference media inputs.",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "string",
+                              "description": "UUID from media_upload/media_import_url or job_id from a prior generation. Do not pass https:// URLs here."
+                            },
+                            "role": {
+                              "type": "string",
+                              "description": "Role — varies by model; inspect the selected model's medias[].roles. Server may auto-coerce when unambiguous."
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "role"
+                          ]
+                        }
+                      },
+                      "use_unlim": {
+                        "description": "Which balance pays for this generation: the caller's free-trial unlimited generations (true) or their credits (false). OMIT IT to let the server decide — if they hold an allowance that covers the model, the tool submits nothing and returns `unlim_choice`, the question to put to the user before spending anything of theirs. Answer it by calling again with the same params plus this field; the answer is remembered for a few minutes, so a multi-step flow is asked once. true also caps count to 1. Whichever way it is set, a rejected opt-in is reported rather than quietly replaced with a charge.",
+                        "type": "boolean"
+                      },
+                      "preset_id": {
+                        "description": "Existing legacy preset ID from a prior selection. Use only with model: higgsfield_preset. For new preset browsing use get_presets; its catalog IDs belong to execute_preset, not this parameter.",
+                        "type": "string"
+                      },
+                      "duration": {
+                        "description": "Duration in seconds. Missing → model default. Unsupported → nearest allowed value or clamped to range.",
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "model"
+                    ],
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1200,
+                    "description": "`sandbox:<path>` for a whole UTF-8 file under /home/user in the Higgsfield sandbox, or `sandbox:<path>#<JSON Pointer>` for one value of a JSON file, e.g. `sandbox:~/film/plan.json#/clips/3/prompt`; `preset:/<command>` for the fenced ```text block of a slash command from get_preset_instructions (`#<n>` picks the n-th when it has several); `quote:<id>` for the params of a cost quote, as its `quote_ref` gave them."
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": {},
+                "description": "A reference naming the params, e.g. the `quote_ref` of a cost quote. Any other key sent next to `ref` replaces the named params' own."
+              }
+            ]
+          }
+        },
+        "required": [
+          "params"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      },
+      "output_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "input_check": {
+            "description": "Genjutsu required-media presence only. A successful price quote does not validate media existence, duration or generation readiness.",
+            "type": "object",
+            "properties": {
+              "required_media_present": {
+                "type": "boolean"
+              },
+              "image_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "video_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "missing_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "video"
+                  ]
+                }
+              },
+              "generation_validated": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "required": [
+              "required_media_present",
+              "image_count",
+              "video_count",
+              "missing_roles",
+              "generation_validated"
+            ],
+            "additionalProperties": false
+          },
+          "prepared_params": {
+            "description": "Genjutsu request params with resolved media UUIDs and applied adjustments. May be incomplete; inspect input_check. Reuse instead of importing the same references again. No generation has been submitted or validated.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "cost": {
+            "description": "Estimated generation cost. No job was submitted.",
+            "type": "object",
+            "properties": {
+              "credits": {
+                "type": "number",
+                "description": "Whole-credit cost (max(1, exact // 1) when exact > 0)."
+              },
+              "credits_exact": {
+                "type": "number",
+                "description": "Exact credit cost as a float."
+              }
+            },
+            "required": [
+              "credits",
+              "credits_exact"
+            ],
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "string"
+          },
+          "request_id": {
+            "description": "MCP server HTTP request ID for support/debugging. If present, show it to the user.",
+            "type": "string"
+          },
+          "upgrade_url": {
+            "description": "Upgrade URL. If present, you MUST show this exact upgrade link to the user so they can upgrade to continue working.",
+            "type": "string"
+          },
+          "adjustments": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "requested": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "used": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "requested",
+                "used",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "references_read": {
+            "description": "Each reference the server read for this call, with the length and sha256 of the value sent in its place (a string as its UTF-8 text, anything else as JSON with sorted keys and no whitespace).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "chars": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sha256": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "chars",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "quote_ref": {
+            "description": "Names exactly the quoted params: pass `params: {\"ref\": quote_ref}` to the generate tool instead of typing them again.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "models_explore": {
+      "description": "Find generation models. Use recommend with goal + input context; use get for model constraints. Items carry supports_unlim when the model accepts free-trial unlimited generations; the top-level unlim block says whether the caller can spend them right now, and the trailing 'Unlim configs' text lists the configurations their allowance actually covers.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "list",
+              "search",
+              "get",
+              "recommend"
+            ],
+            "description": "The action to perform"
+          },
+          "model_id": {
+            "description": "Model ID (required for get)",
+            "type": "string"
+          },
+          "query": {
+            "description": "Model/use-case query; include input context like text-only, reference image, image-to-video, or product URL.",
+            "type": "string",
+            "maxLength": 1024
+          },
+          "type": {
+            "description": "Filter by output type (omit to include all)",
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "audio",
+              "3d"
+            ]
+          },
+          "input": {
+            "description": "Input filter: image = accepts reference media; text = text-only.",
+            "type": "string",
+            "enum": [
+              "text",
+              "image"
+            ]
+          },
+          "unlim": {
+            "description": "When true, return only models that accept free-trial unlimited generations (supports_unlim). Use it to answer \"which models can I use my unlimited generations on\" in one call — each returned item still carries its aspect_ratios, parameters, and durations. Omit to include all models; false is the same as omitting it.",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "Max results, default 20 for list/search, 5 for recommend",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "after": {
+            "description": "Pagination cursor (next_page_token from a previous list/search result; not used by recommend)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    }
+  },
+  "models_explore_get": {
+    "kling4_0": {
+      "id": "kling4_0",
+      "name": "Kling 4.0",
+      "provider_name": "Kling",
+      "description": "Generate video from text, ordered keyframes, references, or edit an input video",
+      "output_type": "video",
+      "parameters": [
+        {
+          "name": "mode",
+          "required": "optional",
+          "type": "string",
+          "description": "Generation mode.",
+          "options": [
+            "text-to-video",
+            "image-to-video",
+            "reference-to-video",
+            "video-edit"
+          ],
+          "default": "text-to-video"
+        },
+        {
+          "name": "resolution",
+          "required": "optional",
+          "type": "string",
+          "description": "Output resolution.",
+          "options": [
+            "720p",
+            "1080p",
+            "4k"
+          ],
+          "default": "1080p"
+        },
+        {
+          "name": "dynamic_range",
+          "required": "optional",
+          "type": "string",
+          "description": "Output dynamic range. HDR requires 1080p or 4K.",
+          "options": [
+            "sdr",
+            "hdr"
+          ],
+          "default": "sdr"
+        },
+        {
+          "name": "duration",
+          "required": "optional",
+          "type": "number",
+          "description": "Duration in whole seconds (3-30). Whole number.",
+          "min": 3,
+          "max": 30,
+          "default": 10
+        },
+        {
+          "name": "kling_element_ids",
+          "required": "optional",
+          "type": "string_array",
+          "description": "Accessible, ready Kling element IDs or reference UUIDs (up to seven)."
+        }
+      ],
+      "medias": [
+        {
+          "name": "medias",
+          "type": "image",
+          "roles": [
+            "start_image",
+            "end_image",
+            "image_references",
+            "video_references"
+          ],
+          "description": "Media roles: start_image — Optional first frame; included in the ten-image limit. | end_image — Optional last frame; included in the ten-image limit. | image_references — Ordered middle frames in image-to-video; reference images in other modes. (array, max 10) | video_references — In video-edit: the base video first, then reference videos. (array, max 5)"
+        }
+      ],
+      "aspect_ratios": [
+        "21:9",
+        "16:9",
+        "9:16",
+        "1:1",
+        "auto"
+      ],
+      "tags": [
+        "text-to-video",
+        "image-to-video",
+        "reference-to-video",
+        "video-edit",
+        "keyframes"
+      ]
+    },
+    "nano_banana_2_1": {
+      "id": "nano_banana_2_1",
+      "name": "Nano Banana 2.1",
+      "provider_name": "Google",
+      "description": "Nano Banana 2.1 image generation with image and video references",
+      "output_type": "image",
+      "parameters": [
+        {
+          "name": "resolution",
+          "required": "optional",
+          "type": "string",
+          "options": [
+            "1k",
+            "2k",
+            "4k"
+          ],
+          "default": "1k"
+        },
+        {
+          "name": "is_inpaint",
+          "required": "optional",
+          "type": "bool",
+          "description": "Whether to restrict the edit to the supplied mask.",
+          "default": false
+        },
+        {
+          "name": "thinking_level",
+          "required": "optional",
+          "type": "string",
+          "options": [
+            "minimal",
+            "medium",
+            "high"
+          ],
+          "default": "medium"
+        },
+        {
+          "name": "enable_web_search",
+          "required": "optional",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "enable_image_search",
+          "required": "optional",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "seed",
+          "required": "optional",
+          "type": "number",
+          "description": "Whole number.",
+          "min": 0,
+          "max": 2147483647,
+          "nullable": true
+        }
+      ],
+      "medias": [
+        {
+          "name": "medias",
+          "type": "image",
+          "roles": [
+            "image_references",
+            "mask",
+            "video_references"
+          ],
+          "description": "Media roles: image_references — Reference images for image generation or editing. (array, max 14) | mask — Full-frame mask for regional image editing. | video_references — One reference video for image generation. (array, max 1)"
+        }
+      ],
+      "aspect_ratios": [
+        "auto",
+        "1:1",
+        "3:2",
+        "2:3",
+        "4:3",
+        "3:4",
+        "4:5",
+        "5:4",
+        "9:16",
+        "16:9",
+        "21:9",
+        "4:1",
+        "1:4",
+        "8:1",
+        "1:8"
+      ],
+      "tags": [
+        "fast",
+        "high-quality",
+        "photorealistic",
+        "versatile",
+        "4k",
+        "text-to-image",
+        "image-to-image",
+        "unlim"
+      ]
+    }
+  },
+  "estimates": {
+    "kling4_0 image-to-video 16:9 10s 1080p (sem medias)": {
+      "credits": 37.5,
+      "credits_exact": 37.5
+    },
+    "nano_banana_2_1 4:5 2k thinking high (sem medias)": {
+      "credits": 2,
+      "credits_exact": 2
+    }
+  }
+}
