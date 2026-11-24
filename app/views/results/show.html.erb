@@ -1,0 +1,23 @@
+<% content_for :title, "Resultado · Repo2Ad" %>
+
+<%= turbo_stream_from @project, :results %>
+
+<p class="text-sm text-ink-soft">Projeto de <%= project_title(@project) %></p>
+<h1 class="mt-2 max-w-[18ch] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Seus criativos</h1>
+
+<%= render "results/summary", project: @project, creatives: @creatives %>
+
+<% if @creatives.empty? %>
+  <div class="crop-marks mt-12 bg-sheet p-6 sm:p-10">
+    <p class="font-semibold">Nenhum criativo foi marcado para gerar ainda.</p>
+    <p class="mt-2 text-ink-soft">Volte ao cardápio, marque os criativos que quer testar e clique em Gerar.</p>
+    <%= link_to "Voltar ao projeto", project_path(@project),
+          class: "mt-6 inline-block font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>
+  </div>
+<% else %>
+  <div class="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2">
+    <% @creatives.each do |creative| %>
+      <%= render "results/creative", creative: creative %>
+    <% end %>
+  </div>
+<% end %>

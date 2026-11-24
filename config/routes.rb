@@ -5,6 +5,7 @@ Rails.application.routes.draw do
 
   resources :projects, only: %i[new create show] do
     resource :audience, only: %i[show update]
+    resource :results, only: :show # §2 Resultado (TR)
     resources :creatives, only: [] do
       resource :regeneration, only: :create # "Gerar de novo" (T11)
     end

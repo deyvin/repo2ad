@@ -1,0 +1,92 @@
+<article id="<%= dom_id(creative, :result) %>" class="min-w-0" aria-labelledby="<%= dom_id(creative, :result_title) %>">
+  <header class="flex items-baseline justify-between gap-4">
+    <h2 id="<%= dom_id(creative, :result_title) %>" class="min-w-0 font-semibold">
+      <span class="mr-2 text-magenta"><%= creative.code %></span><span class="wrap-anywhere"><%= creative.title %></span>
+    </h2>
+  </header>
+  <p class="mt-1 text-sm text-ink-soft"><%= creative_format(creative) %></p>
+
+  <div class="mt-4 border border-rule bg-sheet">
+    <div class="relative w-full overflow-hidden bg-proof" style="<%= creative_aspect_style(creative) %>">
+      <% if creative.result.attached? %>
+        <% if creative_video?(creative) %>
+          <video src="<%= creative_preview_path(creative) %>" class="absolute inset-0 size-full object-contain"
+                 autoplay loop muted playsinline aria-label="Vídeo <%= creative.code %>"></video>
+        <% else %>
+          <img src="<%= creative_preview_path(creative) %>" alt="Criativo <%= creative.code %>: <%= creative.title %>"
+               class="absolute inset-0 size-full object-contain" loading="lazy">
+        <% end %>
+      <% end %>
+
+      <% if creative_in_progress?(creative) %>
+        <div class="absolute inset-0 grid place-items-center bg-sheet/85 p-6 text-center">
+          <p class="flex items-center gap-3 font-semibold">
+            <span class="size-2.5 animate-pulse rounded-full bg-magenta" aria-hidden="true"></span>
+            <%= creative_status_label(creative) %>…
+          </p>
+        </div>
+      <% elsif creative.status == "failed" && !creative.result.attached? %>
+        <div class="absolute inset-0 grid place-items-center p-6 text-center">
+          <p class="font-semibold">Não foi possível gerar este criativo.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if creative.status == "failed" && creative.error.present? %>
+    <p role="alert" class="mt-5 border-l-4 border-magenta bg-sheet px-4 py-3 text-sm wrap-anywhere"><%= creative.error %></p>
+  <% end %>
+
+  <% if (verdict = qa_verdict(creative)) %>
+    <section class="mt-5" aria-label="Revisão automática do <%= creative.code %>">
+      <p class="flex flex-wrap items-baseline gap-x-3">
+        <strong class="<%= verdict == "approve" ? "text-ink" : "text-magenta" %>"><%= ResultsHelper::VERDICTS.fetch(verdict, verdict) %></strong>
+        <% if creative.qa["score"] %><span class="text-sm text-ink-soft">nota <%= creative.qa["score"] %> de 10</span><% end %>
+      </p>
+      <% issues = Array(creative.qa["issues"]) %>
+      <% if issues.any? %>
+        <ul class="mt-3 space-y-2 text-sm">
+          <% issues.each do |issue| %>
+            <li class="border-l-2 border-rule pl-3 wrap-anywhere">
+              <%= issue["what"] %>
+              <span class="block text-ink-soft">Gravidade <%= ResultsHelper::SEVERITIES.fetch(issue["severity"], issue["severity"]).downcase %>. Onde: <%= issue["where"] %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if creative.status == "done" && creative.error.present? %>
+    <p class="mt-4 text-sm text-ink-soft wrap-anywhere"><%= creative.error %></p>
+  <% end %>
+
+  <% if creative.finished? %>
+    <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3" data-controller="dialog">
+      <% if creative.result.attached? %>
+        <%= link_to "Baixar", rails_blob_path(creative.result, disposition: "attachment"),
+              class: "bg-ink px-5 py-2.5 font-semibold text-sheet hover:bg-magenta", data: { turbo: false } %>
+      <% end %>
+      <button type="button" data-action="dialog#open"
+              class="cursor-pointer font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta">
+        Gerar de novo
+      </button>
+
+      <dialog data-dialog-target="dialog" aria-labelledby="<%= dom_id(creative, :regenerate_title) %>"
+              class="m-auto w-[min(32rem,calc(100vw-2rem))] bg-sheet p-6 text-ink backdrop:bg-ink/50 sm:p-8">
+        <%= form_with url: project_creative_regeneration_path(creative.project, creative), method: :post do |form| %>
+          <h3 id="<%= dom_id(creative, :regenerate_title) %>" class="text-xl font-extrabold">Gerar o <%= creative.code %> de novo</h3>
+          <p class="mt-2 text-sm text-ink-soft">Gasta créditos da Higgsfield de novo. Diga o que mudar, se quiser.</p>
+          <%= form.label :instructions, "O que mudar (opcional)", class: "mt-6 block font-semibold", for: dom_id(creative, :instructions) %>
+          <%= form.text_area :instructions, id: dom_id(creative, :instructions), rows: 4,
+                placeholder: "Ex.: título maior, sem a seta",
+                class: "mt-2 w-full border-2 border-rule bg-transparent p-3 focus-visible:border-ink focus-visible:outline-none" %>
+          <div class="mt-6 flex flex-wrap items-center justify-end gap-4">
+            <button type="button" data-action="dialog#close" class="cursor-pointer font-semibold text-ink-soft hover:text-ink">Cancelar</button>
+            <%= form.submit "Gerar de novo", class: "cursor-pointer bg-ink px-5 py-2.5 font-semibold text-sheet hover:bg-magenta" %>
+          </div>
+        <% end %>
+      </dialog>
+    </div>
+  <% end %>
+</article>
