@@ -34,46 +34,21 @@ class ReviewCreativeJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs only: PromptCreativeJob
   end
 
-  test "aceite §9: texto errado (\"Cabidee\") volta como regenerate e refaz pelo P4 com as instruções do QA" do
+  test "aceite §9: texto errado (\"Cabidee\") volta como regenerate, mas é só sugestão: done, nada refeito, nada gasto" do
     @creative.update!(instructions: "seta menor")
     use_claude(fixture("p5_regenerate"))
 
-    assert_enqueued_with(job: PromptCreativeJob, args: [ @creative ]) { ReviewCreativeJob.perform_now(@creative) }
+    ReviewCreativeJob.perform_now(@creative)
 
     @creative.reload
+    assert_equal "done", @creative.status
     assert_equal "regenerate", @creative.qa["verdict"]
     assert_match "Cabidee", @creative.qa["issues"].first["what"]
-    assert_equal 1, @creative.attempts
-    assert_equal "queued", @creative.status
-    assert_equal "seta menor\nQA (regeneração automática 1): #{fixture("p5_regenerate")["fix_instructions"]}", @creative.instructions
-    assert_includes @gateway.calls, [ :balance ]
-    assert_equal "generating", @project.reload.status
-  end
-
-  test "regenerate depois de 2 regenerações automáticas: done com o QA visível" do
-    @creative.update!(attempts: 2)
-    use_claude(fixture("p5_regenerate"))
-
-    ReviewCreativeJob.perform_now(@creative)
-
-    @creative.reload
-    assert_equal "done", @creative.status
-    assert_equal "regenerate", @creative.qa["verdict"]
-    assert_equal 2, @creative.attempts
+    assert_equal fixture("p5_regenerate")["fix_instructions"], @creative.qa["fix_instructions"]
+    assert_equal [ 0, "seta menor" ], [ @creative.attempts, @creative.instructions ]
     assert_no_enqueued_jobs only: PromptCreativeJob
-  end
-
-  test "sem saldo para regenerar: para e mostra no criativo" do
-    @gateway.credits = 1.0
-    use_claude(fixture("p5_regenerate"))
-
-    ReviewCreativeJob.perform_now(@creative)
-
-    @creative.reload
-    assert_equal "done", @creative.status
-    assert_equal 0, @creative.attempts
-    assert_match(/\AO QA pediu para gerar de novo, mas a regeneração automática parou: Saldo insuficiente/, @creative.error)
-    assert_no_enqueued_jobs only: PromptCreativeJob
+    assert_empty @gateway.calls # nem o BalanceGuard é consultado
+    assert_equal "done", @project.reload.status
   end
 
   test "revisão que falha não prende o criativo: done com aviso" do
