@@ -1,0 +1,299 @@
+{
+  "product_name": "Cabide",
+  "one_liner": "Fotografe suas roupas do jeito que der e receba fotos de catálogo em fundo branco e vídeos UGC de alguém vestindo o look.",
+  "core_transformation": {
+    "before": "Fotos caseiras de roupas, tiradas no chão, na cama ou no cabide (inclusive HEIC do iPhone), sem estúdio nem modelo.",
+    "after": "Imagens de catálogo com fundo branco, no estilo manequim invisível, e vídeos verticais de 5 ou 10 s com uma pessoa vestindo as peças escolhidas, prontos para baixar."
+  },
+  "category": "self_hosted_app",
+  "distribution": {
+    "status": "MVP de código aberto (público no GitHub) que roda localmente via Docker em localhost:3000. Não tem login de usuário: é um guarda-roupa único. A descrição do repositório diz 'Cópia de teste do Cabide'.",
+    "how_to_get_it": "Clonar o repositório, copiar o .env.example para .env, gerar as chaves de criptografia, rodar 'docker compose up --build', abrir http://localhost:3000 e clicar em 'Conectar Higgsfield' (login OAuth na própria Higgsfield). Outra opção é usar uma chave de API da Higgsfield.",
+    "cost_model": "O repositório não mostra preço do app nem licença. As gerações consomem créditos da Higgsfield, do plano da conta (modo MCP) ou do saldo pré-pago da API. Cada nova geração gasta créditos."
+  },
+  "features": [
+    {
+      "name": "Adicionar peça com foto de frente e de costas, inclusive HEIC",
+      "user_benefit": "Basta uma foto da frente, tirada em qualquer lugar e até em HEIC direto do iPhone. A das costas é opcional e deixa o vídeo mais fiel.",
+      "evidence": "app/views/garments/_form_dialog.html.erb; README.md (libvips + libheif); docs/screenshots/adicionar-peca.png"
+    },
+    {
+      "name": "Catálogo automático em fundo branco",
+      "user_benefit": "Cada foto vira uma imagem de loja em fundo branco no estilo manequim invisível, preservando as estampas.",
+      "evidence": "README.md (Nano Banana 2.1, ghost mannequin); docs/screenshots/galeria.png"
+    },
+    {
+      "name": "Galeria que se atualiza sozinha",
+      "user_benefit": "O card mostra 'Fotografando para o catálogo' e troca para a foto pronta sem precisar recarregar a página. Passando o mouse, a foto da frente dá lugar à das costas.",
+      "evidence": "app/views/garments/_garment.html.erb; README.md (Turbo Streams + Solid Cable)"
+    },
+    {
+      "name": "Montar o look e gerar vídeo UGC",
+      "user_benefit": "Você seleciona uma ou mais peças prontas, escolhe 5 s ou 10 s e recebe um vídeo vertical de alguém vestindo tudo junto.",
+      "evidence": "app/views/videos/_selection_bar.html.erb; docs/screenshots/selecao-look.png; docs/screenshots/videos.png"
+    },
+    {
+      "name": "Gerar de novo com observação",
+      "user_benefit": "Você corrige o que não ficou bom (por exemplo, a posição de um logo) com uma instrução em texto que entra no prompt com prioridade.",
+      "evidence": "app/views/shared/_regenerate_dialog.html.erb; docs/screenshots/gerar-de-novo.png"
+    },
+    {
+      "name": "Baixar o vídeo",
+      "user_benefit": "O vídeo pronto pode ser baixado para postar onde quiser.",
+      "evidence": "app/views/videos/_video.html.erb (link 'Baixar vídeo')"
+    },
+    {
+      "name": "Saldo de créditos visível",
+      "user_benefit": "Você vê no topo da página quantos créditos da Higgsfield ainda tem.",
+      "evidence": "app/views/balances/show.html.erb; app/views/garments/_higgsfield_status.html.erb"
+    },
+    {
+      "name": "Layout adaptado ao celular",
+      "user_benefit": "No navegador do celular, a galeria vira duas colunas e os botões ficam sempre visíveis.",
+      "evidence": "README.md; docs/screenshots/mobile.png"
+    }
+  ],
+  "can_claim": [
+    {
+      "claim": "Fotografe do jeito que der: no chão, na cama ou no cabide.",
+      "evidence": "README.md; app/views/garments/_form_dialog.html.erb"
+    },
+    {
+      "claim": "Cada foto vira uma imagem de catálogo com fundo branco.",
+      "evidence": "README.md; docs/screenshots/galeria.png"
+    },
+    {
+      "claim": "Gera um vídeo de alguém vestindo o look escolhido.",
+      "evidence": "README.md; docs/screenshots/videos.png"
+    },
+    {
+      "claim": "Vídeos de 5 s ou 10 s em formato vertical.",
+      "evidence": "app/views/videos/_selection_bar.html.erb; app/views/videos/_video.html.erb (aspect 9/16)"
+    },
+    {
+      "claim": "Funciona com fotos HEIC do iPhone.",
+      "evidence": "README.md; app/views/garments/_form_dialog.html.erb"
+    },
+    {
+      "claim": "Não gostou? Gere de novo dizendo o que corrigir.",
+      "evidence": "app/views/shared/_regenerate_dialog.html.erb"
+    },
+    {
+      "claim": "Roda no seu computador com Docker, e suas fotos ficam guardadas localmente.",
+      "evidence": "README.md (Docker, SQLite, Active Storage em disco)"
+    },
+    {
+      "claim": "Usa os modelos Nano Banana 2.1 e Kling 4.0 por meio da sua conta Higgsfield.",
+      "evidence": "README.md; .env.example"
+    },
+    {
+      "claim": "Código aberto e público no GitHub.",
+      "evidence": "repo_meta (repositório público deyvin/cabide)"
+    }
+  ],
+  "must_not_claim": [
+    {
+      "claim": "Grátis / sem custo",
+      "reason": "As gerações consomem créditos da Higgsfield, e o diálogo de gerar de novo avisa que cada nova geração gasta créditos."
+    },
+    {
+      "claim": "Baixe o app / disponível na App Store ou Google Play",
+      "reason": "Não existe app nativo. É um app web que roda localmente via Docker em localhost."
+    },
+    {
+      "claim": "Acesse online, crie sua conta",
+      "reason": "Não há versão hospedada nem login de usuário. O README diz que o app foi pensado para rodar localmente."
+    },
+    {
+      "claim": "Perfeito de primeira / estampas sempre no lugar",
+      "reason": "O README lista como limitação que estampas pequenas fotografadas de lado podem sair fora do lugar."
+    },
+    {
+      "claim": "Resultado instantâneo",
+      "reason": "O vídeo mostra 'Leva alguns minutos', e a geração depende de polling."
+    },
+    {
+      "claim": "Para equipes ou várias lojas",
+      "reason": "O MVP não tem login: é um guarda-roupa único."
+    },
+    {
+      "claim": "Integra com Shopify, Instagram ou marketplaces",
+      "reason": "Não há nenhuma integração além da Higgsfield no repositório."
+    },
+    {
+      "claim": "Produto oficial da Higgsfield",
+      "reason": "O Cabide apenas usa a Higgsfield como provedor. Nada no repositório indica parceria oficial."
+    },
+    {
+      "claim": "Modelos reais / pessoas reais vestindo sua roupa",
+      "reason": "O vídeo é gerado por IA (Kling)."
+    },
+    {
+      "claim": "Gerações ilimitadas",
+      "reason": "O limite são os créditos do plano ou o saldo pré-pago."
+    },
+    {
+      "claim": "Números de usuários, avaliações ou depoimentos",
+      "reason": "Não há nenhum dado desse tipo no repositório."
+    }
+  ],
+  "cta_options": [
+    {
+      "label": "Ver no GitHub",
+      "destination": "https://github.com/deyvin/cabide",
+      "honest_for_current_status": true
+    },
+    {
+      "label": "Rode no seu computador com Docker",
+      "destination": "https://github.com/deyvin/cabide#rodando",
+      "honest_for_current_status": true
+    },
+    {
+      "label": "Conheça o código aberto",
+      "destination": "https://github.com/deyvin/cabide",
+      "honest_for_current_status": true
+    },
+    {
+      "label": "Baixe o app",
+      "destination": "App Store / Google Play",
+      "honest_for_current_status": false
+    },
+    {
+      "label": "Teste grátis",
+      "destination": "Página de cadastro",
+      "honest_for_current_status": false
+    }
+  ],
+  "brand": {
+    "wordmark": "Cabide. (serifada Instrument Serif em tinta escura, com o ponto final em vermelho-giz #c8432b)",
+    "colors": [
+      {
+        "role": "fundo (paper)",
+        "hex": "#f3efe7"
+      },
+      {
+        "role": "fundo secundário (paper-deep)",
+        "hex": "#e9e3d7"
+      },
+      {
+        "role": "texto principal e botões (ink)",
+        "hex": "#161412"
+      },
+      {
+        "role": "texto secundário (ink-soft)",
+        "hex": "#57524a"
+      },
+      {
+        "role": "texto apagado (ink-faint)",
+        "hex": "#9a9387"
+      },
+      {
+        "role": "destaque, CTA Gerar vídeo e ponto do wordmark (chalk)",
+        "hex": "#c8432b"
+      },
+      {
+        "role": "status e conexão ativa (thread)",
+        "hex": "#2f5d50"
+      }
+    ],
+    "fonts": [
+      {
+        "role": "display",
+        "family": "Instrument Serif"
+      },
+      {
+        "role": "body",
+        "family": "Inter Tight"
+      },
+      {
+        "role": "mono",
+        "family": "JetBrains Mono"
+      }
+    ],
+    "tone": "Editorial e calmo, com estética de ateliê (papel, tinta, giz, linha) e linguagem coloquial em pt-BR: 'Fotografe suas roupas do jeito que der', 'Pendure no cabide', 'O cabide está vazio'. É direto e honesto sobre créditos e limitações. Usa rótulos em mono caixa-alta espaçada.",
+    "logo_media_path": null
+  },
+  "media": [
+    {
+      "path": "docs/screenshots/galeria.png",
+      "kind": "screenshot",
+      "description": "Tela principal no desktop com o wordmark 'Cabide.', o card de conexão com a Higgsfield e três moletons em foto de catálogo com fundo branco.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "docs/screenshots/adicionar-peca.png",
+      "kind": "screenshot",
+      "description": "Janela 'Pendure no cabide' com áreas de upload para Frente (obrigatória) e Costas (opcional) e o campo de nome.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "docs/screenshots/selecao-look.png",
+      "kind": "screenshot",
+      "description": "Duas peças selecionadas e a barra flutuante '2 peças no look' com as opções 5 s / 10 s e o botão vermelho 'Gerar vídeo'.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "docs/screenshots/gerar-de-novo.png",
+      "kind": "screenshot",
+      "description": "Janela 'Gerar de novo' para um moletom, com a escolha entre Frente e Costas e uma observação sobre a posição do logo.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "docs/screenshots/videos.png",
+      "kind": "screenshot",
+      "description": "Seção Vídeos com um vídeo vertical de 5 s gerado por IA, mostrando um homem de moletom preto com zíper em estilo selfie.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "docs/screenshots/mobile.png",
+      "kind": "screenshot",
+      "description": "Versão no celular com a galeria em duas colunas, o botão + e o card 'Conectar Higgsfield'.",
+      "usable_for_ads": true
+    },
+    {
+      "path": "public/icon.png",
+      "kind": "other",
+      "description": "Círculo vermelho puro, ícone padrão de placeholder que não representa a marca.",
+      "usable_for_ads": false
+    }
+  ],
+  "audiences": [
+    {
+      "key": "brechos_lojas_online",
+      "name": "Brechós e pequenas lojas de moda online",
+      "who": "Donos de brechó e de pequenas lojas que vendem roupa pelo Instagram, WhatsApp ou marketplaces e cuidam sozinhos das fotos.",
+      "pain": "Não têm estúdio, fundo branco nem modelo. As fotos caseiras deixam o produto com cara amadora e vendem menos.",
+      "moment": "Ao receber um lote novo de peças para anunciar e precisar de fotos de catálogo e vídeos para Reels ou Stories no mesmo dia.",
+      "why_fits": "Aceita foto tirada no chão ou na cama, devolve imagem em fundo branco e vídeo vertical de alguém vestindo a peça, e permite corrigir com uma observação. Para quem topa rodar via Docker com uma conta Higgsfield.",
+      "commercial_strength": "alta"
+    },
+    {
+      "key": "marcas_autorais_merch",
+      "name": "Marcas autorais, streetwear e merch",
+      "who": "Criadores de pequenas marcas de camisetas e moletons estampados, merch de comunidades e eventos.",
+      "pain": "Precisam mostrar a estampa e o caimento antes de investir em sessão de fotos, e cada lançamento exige muito conteúdo visual.",
+      "moment": "No lançamento de uma coleção ou drop, quando precisam rapidamente de fotos de produto e de vídeo UGC para divulgar.",
+      "why_fits": "Preserva as estampas no catálogo, usa frente e costas para um vídeo mais fiel, deixa ajustar a posição de logos em 'Gerar de novo' e permite baixar o vídeo para postar.",
+      "commercial_strength": "media"
+    },
+    {
+      "key": "social_media_ugc_moda",
+      "name": "Social medias e produtores de conteúdo para moda",
+      "who": "Freelancers e pequenas agências que produzem conteúdo para clientes de moda e já usam ferramentas de IA como a Higgsfield.",
+      "pain": "Gastam tempo montando prompts e fluxos manuais para transformar fotos de clientes em catálogo e vídeo UGC.",
+      "moment": "Quando o cliente manda fotos improvisadas das peças e pede posts e vídeos para a semana.",
+      "why_fits": "Organiza o fluxo foto → catálogo → vídeo numa galeria só, usando os créditos da conta Higgsfield que eles já pagam, com refação guiada por observação.",
+      "commercial_strength": "media"
+    }
+  ],
+  "open_questions": [
+    "Qual é a licença do repositório? Ela não aparece no snapshot.",
+    "Quantos créditos da Higgsfield custa, em média, cada foto de catálogo e cada vídeo?",
+    "Existe plano de versão hospedada, com login, para usuários não técnicos?",
+    "O repositório se descreve como 'Cópia de teste do Cabide': existe um repositório oficial ou outro destino para o CTA?",
+    "Há um logo real? O public/icon.png é um círculo vermelho de placeholder.",
+    "Os vídeos gerados têm áudio?",
+    "Quantas peças cabem no mesmo look (limite de imagens de referência do vídeo)?",
+    "Funciona bem com outros tipos de peça além de moletons (calças, vestidos, calçados)?"
+  ]
+}

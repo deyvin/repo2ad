@@ -36,6 +36,10 @@ gem "mcp", "~> 1.10"
 gem "faraday"             # transporte HTTP do cliente MCP
 gem "event_stream_parser" # respostas SSE do servidor MCP
 
+# Raciocínio P1–P5 via OpenRouter com o SDK oficial da Anthropic (decisão 002) e validação dos JSON (decisão 003)
+gem "anthropic", "~> 2.13"
+gem "json_schemer", "~> 2.4"
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
