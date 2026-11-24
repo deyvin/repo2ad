@@ -171,6 +171,23 @@ class IngestRepoJobTest < ActiveJob::TestCase
     assert_match "não encontrado", project.error
   end
 
+  test "foto corrompida é ignorada com aviso e o projeto segue" do
+    IngestRepoJob.api_factory = -> { FakeGithubApi.new }
+    project = Project.create!(repo_url: CABIDE_URL)
+    broken = project.media_inputs.create!(source: "upload")
+    broken.file.attach(io: StringIO.new("isto não é uma imagem"), filename: "quebrada.jpg", content_type: "image/jpeg")
+    good = project.media_inputs.create!(source: "upload")
+    good.file.attach(io: File.open(make_image(@dir, "foto_1.png", size: "800x600"), "rb"), filename: "foto_1.png")
+
+    IngestRepoJob.perform_now(project.id)
+
+    project.reload
+    assert_equal "analyzing", project.status
+    assert_nil project.error
+    assert_equal [ "quebrada.jpg" ], project.ignored_uploads
+    assert_equal [ good.id ], project.media_inputs.where(source: "upload").pluck(:id)
+  end
+
   test "fotos enviadas são normalizadas no job, com o lado maior em 1568 px" do
     IngestRepoJob.api_factory = -> { FakeGithubApi.new }
     project = Project.create!(repo_url: CABIDE_URL)

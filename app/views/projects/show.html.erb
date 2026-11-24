@@ -1,8 +1,7 @@
 <% content_for :title, "Análise · Repo2Ad" %>
 
-<% repo_name = @project.owner && @project.name ? "#{@project.owner}/#{@project.name}" : "Repositório" %>
 <p class="text-sm text-ink-soft">Análise do projeto</p>
-<h1 class="mt-2 max-w-full wrap-anywhere text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl"><%= repo_name %></h1>
+<%= render "projects/title", project: @project %>
 
 <%= turbo_stream_from @project %>
 

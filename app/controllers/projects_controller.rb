@@ -45,9 +45,9 @@ class ProjectsController < ApplicationController
 
   def validate_photos(photos)
     if photos.size > MAX_PHOTOS
-      @project.errors.add(:photos, "envie até #{MAX_PHOTOS} fotos")
+      @project.errors.add(:photos, "Envie até #{MAX_PHOTOS} fotos.")
     elsif photos.any? { |photo| PHOTO_EXTENSIONS.exclude?(File.extname(photo.original_filename).downcase) }
-      @project.errors.add(:photos, "formato não aceito: use JPG, PNG ou HEIC")
+      @project.errors.add(:photos, "Formato não aceito: use JPG, PNG ou HEIC.")
     end
   end
 

@@ -120,4 +120,45 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
       project.transition_to!("ingesting")
     end
   end
+
+  test "o título mostra owner/name e se atualiza quando o repositório é conhecido" do
+    project = Project.create!(repo_url: CABIDE_URL)
+    get project_path(project)
+    assert_select "h1", "Repositório"
+
+    assert_turbo_stream_broadcasts [ project ] do
+      project.update!(owner: "deyvin", name: "cabide")
+    end
+
+    title = ApplicationController.render(partial: "projects/title", locals: { project: project.reload })
+    assert_includes title, "deyvin/cabide"
+  end
+
+  test "com o commit gravado, a etapa em andamento é lendo arquivos" do
+    project = Project.create!(repo_url: CABIDE_URL, status: "ingesting", owner: "deyvin", name: "cabide",
+                              commit_sha: "abc123")
+
+    get project_path(project)
+
+    assert_select "h1", "deyvin/cabide"
+    assert_select "[aria-current=step]", count: 1
+    assert_select "[aria-current=step]", /lendo arquivos/
+  end
+
+  test "a tela de análise avisa quais fotos foram ignoradas" do
+    project = Project.create!(repo_url: CABIDE_URL, status: "analyzing", ignored_uploads: [ "quebrada.jpg" ])
+
+    get project_path(project)
+
+    assert_select "[role=status]", "1 foto ignorada: quebrada.jpg (não é uma imagem válida)"
+  end
+
+  test "frases da mensagem de erro começam com maiúscula" do
+    project = Project.create!(repo_url: CABIDE_URL, status: "failed",
+                              error: "Falhou ao baixar. formato de imagem não suportado")
+
+    get project_path(project)
+
+    assert_select "[role=alert] p", /Formato de imagem não suportado/
+  end
 end

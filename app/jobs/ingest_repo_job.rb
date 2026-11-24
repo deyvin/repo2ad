@@ -71,18 +71,28 @@ class IngestRepoJob < ApplicationJob
     project.media_inputs.where(source: "upload").find_each do |media|
       next unless media.file.attached?
 
-      media.file.blob.open do |original|
-        normalized = Media::Normalizer.call(original.path, max_side: MAX_IMAGE_SIDE)
-        begin
-          probe = Media::Probe.call(normalized)
-          media.update!(width: probe.width, height: probe.height)
-          name = "#{media.file.filename.base}#{File.extname(normalized)}"
-          File.open(normalized, "rb") { |io| media.file.attach(io: io, filename: name) }
-        ensure
-          FileUtils.rm_f(normalized)
-        end
+      normalize_upload(project, media)
+    end
+  end
+
+  # Foto que não abre como imagem (texto com extensão .jpg, por exemplo) é descartada com aviso; o projeto segue.
+  def normalize_upload(project, media)
+    name = media.file.filename.to_s
+    media.file.blob.open do |original|
+      normalized = Media::Normalizer.call(original.path, max_side: MAX_IMAGE_SIDE)
+      begin
+        probe = Media::Probe.call(normalized)
+        media.update!(width: probe.width, height: probe.height)
+        attach_name = "#{media.file.filename.base}#{File.extname(normalized)}"
+        File.open(normalized, "rb") { |io| media.file.attach(io: io, filename: attach_name) }
+      ensure
+        FileUtils.rm_f(normalized)
       end
     end
+  rescue Media::Normalizer::Error, Media::Probe::Error => e
+    Rails.logger.warn("[repo2ad] foto ignorada #{name}: #{e.message}")
+    project.update!(ignored_uploads: [ *Array(project.ignored_uploads), name ])
+    media.destroy!
   end
 
   def create_media_input(project, root, image)

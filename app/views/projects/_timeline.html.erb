@@ -15,6 +15,10 @@
     <% end %>
   </ol>
 
+  <% if ignored_uploads_notice(project) %>
+    <p role="status" class="mt-8 border-l-4 border-ink bg-proof px-4 py-3 text-sm font-semibold"><%= ignored_uploads_notice(project) %></p>
+  <% end %>
+
   <% if project.status == "analyzing" %>
     <p class="mt-8 text-lg font-semibold">Analisando produto…</p>
   <% end %>
@@ -22,7 +26,7 @@
   <% if project.status == "failed" %>
     <div role="alert" class="mt-8 min-w-0 border-l-4 border-magenta bg-proof px-4 py-3">
       <p class="font-semibold">Não consegui analisar este repositório.</p>
-      <p class="mt-1 wrap-anywhere text-sm"><%= project.error %></p>
+      <p class="mt-1 wrap-anywhere text-sm"><%= capitalized_sentences(project.error) %></p>
     </div>
     <%= link_to "Tentar com outra URL", new_project_path,
           class: "mt-6 inline-block font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>
