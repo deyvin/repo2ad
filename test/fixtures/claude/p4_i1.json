@@ -1,0 +1,40 @@
+{
+  "recipe": "nb_image",
+  "on_screen_copy": [
+    "ANTES",
+    "DEPOIS",
+    "isso virou isso",
+    "Tirei no chão do quarto.",
+    "Virou foto de loja.",
+    "CABIDE. — GUARDA-ROUPA DIGITAL COM IA"
+  ],
+  "checks": [
+    "estampa ANTI FRONT END CLUB no peito esquerdo",
+    "logo Mano Deyvin no peito direito",
+    "uma única seta vermelha da foto ANTES para a foto DEPOIS"
+  ],
+  "steps": [
+    {
+      "name": "main",
+      "kind": "nano_banana",
+      "model": "nano_banana_2_1",
+      "prompt": "Viral social media ad, vertical 4:5, playful \"before vs after\" meme layout on a warm off-white paper background (#f3efe7) with subtle paper grain.\nTwo photo prints taped to the paper with strips of masking tape, slightly tilted like a moodboard.\nLEFT print, tilted a few degrees counter-clockwise, labeled \"ANTES\" in small black monospace caps above it: the FIRST reference photo exactly as it is, the black zip hoodie lying crumpled on a white tile floor next to a grey rug and a tripod, amateur phone photo, untouched.\nRIGHT print, slightly bigger and tilted clockwise, labeled \"DEPOIS\" in small black monospace caps above it: the SECOND reference image exactly as it is, the same black zip hoodie as a clean ghost-mannequin e-commerce catalog shot on pure white, \"ANTI FRONT END CLUB\" print on the left chest and the \"Mano Deyvin\" logo on the right chest, crisp and legible, identical to the reference.\nA bold hand-drawn red marker arrow (#c8432b) loops from the left print to the right print, with the handwritten red scribble \"isso virou isso\" next to it.\nAt the top, a big elegant black serif headline (Instrument Serif style), two lines: \"Tirei no chão do quarto.\" and, in italic, \"Virou foto de loja.\"\nAt the bottom, small black monospace caps: \"CABIDE. — GUARDA-ROUPA DIGITAL COM IA\".\nEditorial, witty, scroll-stopping, high contrast, clean typography, all text in Brazilian Portuguese spelled exactly as written, no other text, no watermarks.",
+      "params": {
+        "aspect_ratio": "4:5",
+        "resolution": "2k",
+        "duration": null,
+        "mode": null,
+        "thinking_level": "high"
+      },
+      "inputs": {
+        "image_references": [
+          "uploads/chao.jpg",
+          "uploads/catalogo.png"
+        ],
+        "start_image": null,
+        "end_image": null
+      },
+      "compose_plan": null
+    }
+  ]
+}

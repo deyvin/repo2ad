@@ -81,9 +81,12 @@ module Claude
 
     private
 
+    # System + blocos fixos da etapa (ex.: contrato da receita e exemplos no P4), todos cacheáveis (máx. 4).
     def system_blocks
-      [ { type: "text", text: system_prompt, cache_control: { type: "ephemeral" } } ]
+      [ system_prompt, *fixed_blocks ].first(4).map { |text| { type: "text", text: text, cache_control: { type: "ephemeral" } } }
     end
+
+    def fixed_blocks = []
 
     def parse_and_validate(text)
       data = JSON.parse(text.to_s)

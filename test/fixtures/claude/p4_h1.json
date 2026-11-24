@@ -1,0 +1,97 @@
+{
+  "recipe": "kling_keyframes",
+  "on_screen_copy": [
+    "Cabide.",
+    "Do chão do quarto pra vitrine.",
+    "Ver no GitHub →"
+  ],
+  "checks": [
+    "wordmark Cabide. com o ponto vermelho #c8432b",
+    "botão preto Ver no GitHub → com cursor",
+    "estampas do moletom consistentes"
+  ],
+  "steps": [
+    {
+      "name": "start_frame",
+      "kind": "compose",
+      "model": null,
+      "prompt": null,
+      "params": {
+        "aspect_ratio": "16:9",
+        "resolution": "2k",
+        "duration": null,
+        "mode": null,
+        "thinking_level": null
+      },
+      "inputs": {
+        "image_references": [],
+        "start_image": null,
+        "end_image": null
+      },
+      "compose_plan": {
+        "canvas_aspect": "16:9",
+        "background_hex": "#f3efe7",
+        "layers": [
+          {
+            "media_path": "docs/screenshots/galeria.png",
+            "frame": "browser",
+            "x_pct": 5,
+            "y_pct": 13,
+            "width_pct": 65,
+            "rotation_deg": 0,
+            "crop_top_pct": 90
+          },
+          {
+            "media_path": "uploads/chao.jpg",
+            "frame": "print",
+            "x_pct": 70,
+            "y_pct": 35,
+            "width_pct": 24,
+            "rotation_deg": -7,
+            "crop_top_pct": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "end_frame",
+      "kind": "nano_banana",
+      "model": "nano_banana_2_1",
+      "prompt": "16:9 SaaS product launch animation keyframe, final frame / logo reveal. Clean warm off-white paper background (#f3efe7), soft studio lighting, premium minimal Apple-style product marketing composition, like a modern app launch end card.\nLEFT third: a realistic modern smartphone mockup (thin black bezel, slight 3/4 angle, soft contact shadow). Its screen shows a vertical try-on video frame taken exactly from the first reference image: a smiling young man wearing the black zip hoodie with \"ANTI FRONT END CLUB\" and \"Mano Deyvin\" prints, in a bright apartment. A tiny play-progress bar at the bottom of the screen.\nRIGHT two thirds, vertically centered and left-aligned: the wordmark \"Cabide.\" set very large in an elegant black high-contrast serif (Instrument Serif style), the final period is a small red dot (#c8432b).\nBelow it, a short tagline in grey sans-serif (Inter Tight style): \"Do chão do quarto pra vitrine.\"\nBelow that, a black pill button with white text \"Ver no GitHub →\", with a black mouse cursor arrow touching its lower-right corner.\nAll text in Brazilian Portuguese spelled exactly as written, crisp and centered on a clean grid. No other text, no watermark.",
+      "params": {
+        "aspect_ratio": "16:9",
+        "resolution": "2k",
+        "duration": null,
+        "mode": null,
+        "thinking_level": "high"
+      },
+      "inputs": {
+        "image_references": [
+          "uploads/catalogo.png"
+        ],
+        "start_image": null,
+        "end_image": null
+      },
+      "compose_plan": null
+    },
+    {
+      "name": "main",
+      "kind": "kling",
+      "model": "kling4_0",
+      "prompt": "Polished SaaS product launch motion-graphics animation, smooth After Effects style, 16:9, clean warm off-white background, soft shadows, ease-in-out keyframes, no camera shake.\n0-2s: the mouse cursor clicks the black \"Adicionar peça\" button with a subtle press bounce. The tilted floor photo print on the right lifts up, glides into the browser window and lands in the gallery.\n2-4s: a smooth shimmer sweeps across the photo and it morphs cleanly into a crisp white e-commerce catalog card of the same black zip hoodie, matching the other hoodie cards in the grid.\n4-6.5s: the camera smoothly pushes in and the browser window gracefully slides and scales down to the left while rotating into a modern smartphone; the phone screen plays a vertical try-on video of a smiling young man wearing that same black zip hoodie.\n6.5-10s: on the right, the large black serif wordmark \"Cabide.\" reveals letter by letter with a soft upward motion, the red dot pops in last with a small bounce; the grey tagline fades up under it; the black \"Ver no GitHub →\" pill button scales in and the cursor glides to it.\nKeep all UI text crisp and legible, the hoodie prints consistent. Calm, premium, modern product marketing feel.",
+      "params": {
+        "aspect_ratio": "16:9",
+        "resolution": "1080p",
+        "duration": 10,
+        "mode": "image-to-video",
+        "thinking_level": null
+      },
+      "inputs": {
+        "image_references": [],
+        "start_image": "step:start_frame",
+        "end_image": "step:end_frame"
+      },
+      "compose_plan": null
+    }
+  ]
+}

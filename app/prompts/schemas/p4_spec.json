@@ -36,7 +36,10 @@
               "properties": {
                 "media_path": { "type": "string" },
                 "frame": { "type": "string", "enum": ["browser", "phone", "print", "none"] },
-                "x_pct": { "type": "number" }, "y_pct": { "type": "number" }, "width_pct": { "type": "number" },
-                "rotation_deg": { "type": "number" }, "crop_top_pct": { "type": "number" } } } } } } } } }
+                "x_pct": { "type": "number", "description": "canto superior esquerdo da moldura (sem rotação e sem sombra), em % da largura do canvas" },
+                "y_pct": { "type": "number", "description": "canto superior esquerdo da moldura (sem rotação e sem sombra), em % da altura do canvas" },
+                "width_pct": { "type": "number", "description": "largura da moldura em % da largura do canvas; a altura segue a proporção da mídia depois do corte" },
+                "rotation_deg": { "type": "number", "description": "graus no sentido horário, como no CSS, em volta do centro da moldura; negativo inclina para a esquerda (o H1 usa -7)" },
+                "crop_top_pct": { "type": "number", "description": "% da altura da mídia mantida a partir do topo; 0 ou 100 = sem corte; o corte vai para a linha em branco mais próxima, sem partir texto" } } } } } } } } }
   }
 }

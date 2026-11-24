@@ -1,6 +1,6 @@
 # Acompanha um render_step submetido à Higgsfield (§3.5): consulta o status a cada poll_after_seconds
 # (padrão 5 s), por no máximo 30 min, baixa o resultado e anexa em render_step.output.
-# A continuação da receita (próximo step, creative.result) entra com o RenderCreativeJob na T9.
+# Ao terminar, devolve a vez ao RenderCreativeJob (próximo step ou resultado final); ao falhar, falha o criativo.
 class PollRenderStepJob < ApplicationJob
   queue_as :default
 
@@ -30,6 +30,7 @@ class PollRenderStepJob < ApplicationJob
     if result.done?
       attach_output(render_step, gateway.download(result.result_url))
       render_step.update!(status: "done", error: nil)
+      RenderCreativeJob.perform_later(render_step.creative)
     elsif result.failed?
       fail_step(render_step, result.error)
     else
@@ -59,5 +60,6 @@ class PollRenderStepJob < ApplicationJob
   def fail_step(render_step, message)
     Rails.logger.warn("[repo2ad] render_step #{render_step.id} falhou: #{message}")
     render_step.update!(status: "failed", error: message)
+    render_step.creative.update!(status: "failed", error: "O passo #{render_step.name} falhou: #{message}")
   end
 end
