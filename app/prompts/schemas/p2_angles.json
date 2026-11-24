@@ -1,0 +1,12 @@
+{
+  "type": "object", "additionalProperties": false, "required": ["audience_summary", "angles"],
+  "properties": {
+    "audience_summary": { "type": "string" },
+    "angles": { "type": "array", "minItems": 4, "maxItems": 6, "items": { "type": "object", "additionalProperties": false,
+      "required": ["key", "name", "hook", "support_line", "proof", "cta_label", "primary"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z0-9_]+$" }, "name": { "type": "string" },
+        "hook": { "type": "string", "maxLength": 60 }, "support_line": { "type": "string", "maxLength": 120 },
+        "proof": { "type": "string" }, "cta_label": { "type": "string" }, "primary": { "type": "boolean" } } } }
+  }
+}

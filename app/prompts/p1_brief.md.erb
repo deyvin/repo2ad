@@ -1,0 +1,18 @@
+Your job: read the repository snapshot and write the product brief that every later step depends on.
+
+Work like a product marketer who also reads code:
+1. Figure out what the product does for a person, not how it is built. Name the core transformation
+   ("messy phone photo in, store-ready catalog photo and try-on video out").
+2. List the features a user would notice, each tied to evidence (file path or image).
+3. Determine the real distribution status from the code: is it a hosted SaaS with signup, a mobile app, a CLI,
+   a library, a self-hosted app (e.g. runs via Docker on localhost), a prototype? This decides which calls-to-action
+   are honest.
+4. Write two lists: claims we can make (each backed by evidence) and claims we must not make (things an ad would be
+   tempted to say but the repo contradicts or does not support, e.g. "free" when generation costs credits,
+   "download the app" when it only runs locally, "perfect first try" when the README lists limitations).
+5. Extract the brand: product name as written, colors (hex), fonts, tone of voice, and logo or wordmark if present.
+   Prefer values found in CSS/theme files and brand_hints over guesses from screenshots.
+6. Classify each provided image (screenshot, photo, logo, diagram, other) and describe it in one line, so later steps
+   can reference images by path.
+7. Propose exactly three distinct target audiences that would plausibly pay for or adopt this product, ordered by
+   commercial strength, each with their pain, the moment they would use it, and why this product fits.

@@ -1,0 +1,42 @@
+{
+  "type": "object", "additionalProperties": false, "required": ["recipe", "steps", "on_screen_copy", "checks"],
+  "properties": {
+    "recipe": { "type": "string", "enum": ["nb_image", "kling_reference", "kling_magic", "kling_keyframes"] },
+    "on_screen_copy": { "type": "array", "items": { "type": "string" },
+      "description": "todo texto que deve aparecer no criativo, exatamente como deve ser escrito (usado pelo QA)" },
+    "checks": { "type": "array", "items": { "type": "string" },
+      "description": "o que o QA deve verificar (ex.: estampa ANTI FRONT END CLUB no peito esquerdo)" },
+    "steps": { "type": "array", "minItems": 1, "maxItems": 3, "items": { "type": "object", "additionalProperties": false,
+      "required": ["name", "kind", "model", "prompt", "params", "inputs", "compose_plan"],
+      "properties": {
+        "name": { "type": "string", "enum": ["start_frame", "end_frame", "main"] },
+        "kind": { "type": "string", "enum": ["compose", "nano_banana", "kling"] },
+        "model": { "type": ["string", "null"], "enum": ["nano_banana_2_1", "kling4_0", null] },
+        "prompt": { "type": ["string", "null"] },
+        "params": { "type": "object", "additionalProperties": false,
+          "required": ["aspect_ratio", "resolution", "duration", "mode", "thinking_level"],
+          "properties": {
+            "aspect_ratio": { "type": "string", "enum": ["1:1", "4:5", "9:16", "16:9"] },
+            "resolution": { "type": "string", "enum": ["2k", "1080p"] },
+            "duration": { "type": ["integer", "null"], "enum": [5, 10, null] },
+            "mode": { "type": ["string", "null"], "enum": ["image-to-video", "reference-to-video", null] },
+            "thinking_level": { "type": ["string", "null"], "enum": ["high", null] } } },
+        "inputs": { "type": "object", "additionalProperties": false, "required": ["image_references", "start_image", "end_image"],
+          "properties": {
+            "image_references": { "type": "array", "maxItems": 8, "items": { "type": "string" },
+              "description": "paths de media_inputs ou 'step:<name>'" },
+            "start_image": { "type": ["string", "null"] }, "end_image": { "type": ["string", "null"] } } },
+        "compose_plan": { "type": ["object", "null"], "additionalProperties": false,
+          "required": ["canvas_aspect", "background_hex", "layers"],
+          "properties": {
+            "canvas_aspect": { "type": "string", "enum": ["9:16", "16:9", "4:5", "1:1"] },
+            "background_hex": { "type": "string" },
+            "layers": { "type": "array", "maxItems": 4, "items": { "type": "object", "additionalProperties": false,
+              "required": ["media_path", "frame", "x_pct", "y_pct", "width_pct", "rotation_deg", "crop_top_pct"],
+              "properties": {
+                "media_path": { "type": "string" },
+                "frame": { "type": "string", "enum": ["browser", "phone", "print", "none"] },
+                "x_pct": { "type": "number" }, "y_pct": { "type": "number" }, "width_pct": { "type": "number" },
+                "rotation_deg": { "type": "number" }, "crop_top_pct": { "type": "number" } } } } } } } } }
+  }
+}

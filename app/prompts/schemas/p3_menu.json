@@ -1,0 +1,22 @@
+{
+  "type": "object", "additionalProperties": false, "required": ["items"],
+  "properties": {
+    "items": { "type": "array", "minItems": 10, "maxItems": 12, "items": { "type": "object", "additionalProperties": false,
+      "required": ["code", "group", "recipe", "title", "aspect_ratio", "duration_seconds", "angle_key", "concept",
+                   "beats", "media_paths", "needs_user_media", "caption_overlay", "recommended"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[IVH][0-9]+$" },
+        "group": { "type": "string", "enum": ["image", "vertical", "horizontal"] },
+        "recipe": { "type": "string", "enum": ["nb_image", "kling_reference", "kling_magic", "kling_keyframes"] },
+        "title": { "type": "string" },
+        "aspect_ratio": { "type": "string", "enum": ["1:1", "4:5", "9:16", "16:9"] },
+        "duration_seconds": { "type": ["integer", "null"], "enum": [5, 10, null] },
+        "angle_key": { "type": "string" },
+        "concept": { "type": "string", "description": "uma linha em pt-BR, como aparece no card" },
+        "beats": { "type": "array", "maxItems": 4, "items": { "type": "string" } },
+        "media_paths": { "type": "array", "items": { "type": "string" } },
+        "needs_user_media": { "type": ["string", "null"] },
+        "caption_overlay": { "type": ["string", "null"] },
+        "recommended": { "type": "boolean" } } } }
+  }
+}
