@@ -8,7 +8,7 @@ class HiggsfieldConnection < ApplicationRecord
   serialize :tokens, coder: JSON
   serialize :pending, coder: JSON
 
-  encrypts :tokens
+  encrypts :tokens, :pending
 
   # Renew the access token this long before the server would reject it.
   EXPIRY_MARGIN = 2.minutes

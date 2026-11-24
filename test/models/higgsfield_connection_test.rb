@@ -88,3 +88,14 @@ class HiggsfieldConnectionTokenLifecycleTest < ActiveSupport::TestCase
     assert_nil connection.connected_at
   end
 end
+
+class HiggsfieldConnectionPendingEncryptionTest < ActiveSupport::TestCase
+  test "o pending (code_verifier do PKCE) fica criptografado no banco" do
+    connection = HiggsfieldConnection.current
+    connection.save_pending_authorization("state-x", { "code_verifier" => "verificador-secreto" })
+
+    raw = HiggsfieldConnection.connection.select_value("SELECT pending FROM higgsfield_connections WHERE id = #{connection.id}")
+    refute_includes raw, "verificador-secreto"
+    assert_equal "verificador-secreto", connection.pending_authorization("state-x")["code_verifier"]
+  end
+end
