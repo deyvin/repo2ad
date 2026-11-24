@@ -3,6 +3,7 @@ require "open3"
 
 module Media
   # Mede imagem ou vídeo com ffprobe: largura, altura, duração (s, nil para imagem) e aspecto.
+  # Imagem precisa ser medida depois do Media::Normalizer: o ffprobe não aplica o EXIF de orientação de JPEG.
   class Probe
     class Error < StandardError; end
 
@@ -17,6 +18,10 @@ module Media
       "3:4" => 3.0 / 4
     }.freeze
     TOLERANCE = 0.02
+
+    IMAGE_CODECS = %w[mjpeg png webp gif bmp].freeze
+    # image2 é o demuxer de imagem única (JPEG); *_pipe cobre png_pipe, webp_pipe, bmp_pipe etc.
+    IMAGE_FORMAT = /\A(?:image2|image2pipe|\w+_pipe)\z/
 
     def self.call(path)
       new(path).call
@@ -70,9 +75,18 @@ module Media
       (from_tags || from_side_data || 0).to_i
     end
 
+    # Só vídeo tem duração. Um JPEG aparece como vídeo de 1 quadro e o format_name traz uma duração falsa (0,04 s).
     def duration(stream, data)
+      return nil if image?(stream, data)
+
       value = stream["duration"] || data.dig("format", "duration")
       Float(value, exception: false)
+    end
+
+    def image?(stream, data)
+      return true if data.dig("format", "format_name").to_s.match?(IMAGE_FORMAT)
+
+      IMAGE_CODECS.include?(stream["codec_name"]) && stream["nb_frames"].to_i <= 1
     end
 
     def aspect_label(width, height)

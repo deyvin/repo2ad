@@ -47,6 +47,26 @@ module Media
       assert_equal "4:5", result.aspect
     end
 
+    test "JPEG não tem duração, mesmo com o format.duration falso do demuxer image2" do
+      path = make_image(@dir, "foto.jpg", size: "800x1000")
+
+      result = Probe.call(path)
+
+      assert_equal 800, result.width
+      assert_equal 1000, result.height
+      assert_nil result.duration
+      assert_equal "4:5", result.aspect
+    end
+
+    test "WEBP não tem duração" do
+      path = make_image(@dir, "foto.webp", size: "400x500")
+
+      result = Probe.call(path)
+
+      assert_nil result.duration
+      assert_equal "4:5", result.aspect
+    end
+
     test "tolerância de 2% ainda reconhece o rótulo" do
       # 1000x1800 tem razão 0,5556, 1,2% abaixo de 9:16
       path = make_image(@dir, "quase916.png", size: "1000x1800")
