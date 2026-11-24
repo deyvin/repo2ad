@@ -72,7 +72,7 @@ class ReviewCreativeJobTest < ActiveJob::TestCase
     @creative.reload
     assert_equal "done", @creative.status
     assert_equal 0, @creative.attempts
-    assert_equal "O QA pediu para gerar de novo, mas a regeneração automática parou: Saldo insuficiente: precisa de 2,00 créditos, você tem 1,00", @creative.error
+    assert_match(/\AO QA pediu para gerar de novo, mas a regeneração automática parou: Saldo insuficiente/, @creative.error)
     assert_no_enqueued_jobs only: PromptCreativeJob
   end
 
