@@ -11,8 +11,6 @@ services:
     volumes:
       - .:/rails
       - bundle:/usr/local/bundle
-      # Higgsfield CLI login from the host (read-write: the CLI may refresh the token). Container runs as root.
-      - ~/.config/higgsfield:/root/.config/higgsfield
     command: ["./bin/rails", "server", "-b", "0.0.0.0"]
 
   css:
