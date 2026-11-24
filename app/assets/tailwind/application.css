@@ -39,8 +39,9 @@
   }
 
   .crop-marks::before {
-    --mark: 18px;
-    --edge: calc(var(--mark) + 8px);
+    /* Must stay inside the page padding (24px on mobile) so the marks never cause horizontal scroll. */
+    --mark: 12px;
+    --edge: calc(var(--mark) + 6px);
     --line: linear-gradient(var(--color-ink), var(--color-ink));
     content: "";
     position: absolute;
@@ -55,5 +56,12 @@
       var(--line) left 0 bottom var(--edge) / var(--mark) 1px no-repeat,
       var(--line) right var(--edge) bottom 0 / 1px var(--mark) no-repeat,
       var(--line) right 0 bottom var(--edge) / var(--mark) 1px no-repeat;
+  }
+
+  @media (width >= 40rem) {
+    .crop-marks::before {
+      --mark: 18px;
+      --edge: calc(var(--mark) + 8px);
+    }
   }
 }

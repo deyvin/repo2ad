@@ -2,6 +2,8 @@
 
 # If running the rails server (with or without extra flags like -b), create or migrate the databases.
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  # tmp/ lives on the bind mount, so a killed container leaves a stale pid behind. Only one server runs per container.
+  rm -f tmp/pids/server.pid
   ./bin/rails db:prepare
 fi
 
