@@ -1,0 +1,37 @@
+<div id="<%= dom_id(project, :menu) %>" class="min-w-0" data-controller="selection">
+  <% if project.status == "planning" %>
+    <p class="text-lg font-semibold">Montando o cardápio de criativos…</p>
+  <% elsif project.status == "awaiting_selection" %>
+    <% creatives = project.creatives.order(:id).to_a %>
+    <% creative_groups.each do |group, heading| %>
+      <% items = creatives.select { |creative| creative.group == group } %>
+      <% next if items.empty? %>
+      <section class="mt-8 first:mt-0" aria-labelledby="group_<%= group %>">
+        <h2 id="group_<%= group %>" class="text-sm font-semibold uppercase tracking-widest text-ink-soft"><%= heading %></h2>
+        <ul class="mt-4 grid gap-4 sm:grid-cols-2">
+          <% items.each do |creative| %>
+            <li class="min-w-0">
+              <label class="flex h-full cursor-pointer items-start gap-3 border-2 border-rule bg-sheet p-4 has-[:checked]:border-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-magenta">
+                <input type="checkbox" name="creative_ids[]" value="<%= creative.id %>" <%= "checked" if creative.selected %>
+                       data-selection-target="checkbox" data-action="change->selection#update"
+                       class="mt-1 size-4 shrink-0 accent-ink" aria-describedby="creative_<%= creative.id %>">
+                <span class="min-w-0">
+                  <span class="block text-xs font-semibold uppercase tracking-widest text-ink-soft"><%= creative.code %> · <%= creative_format(creative) %></span>
+                  <span class="mt-1 block font-semibold wrap-anywhere"><%= creative.title %></span>
+                  <span id="creative_<%= creative.id %>" class="mt-1 block text-sm text-ink-soft wrap-anywhere"><%= creative.concept.to_h["concept"] %></span>
+                  <span class="mt-2 block text-xs text-ink-soft"><%= recipe_label(creative.recipe) %></span>
+                </span>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <div class="mt-8 flex flex-wrap items-center gap-4">
+      <p class="text-sm font-semibold" aria-live="polite" data-selection-target="count"><%= creatives.count(&:selected) %> selecionado(s)</p>
+      <%= submit_tag "Gerar", data: { selection_target: "submit" },
+            class: "cursor-pointer bg-ink px-6 py-3 font-semibold text-sheet hover:bg-magenta disabled:cursor-not-allowed disabled:opacity-60" %>
+    </div>
+  <% end %>
+</div>

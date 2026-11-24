@@ -76,5 +76,7 @@ class Project < ApplicationRecord
                                partial: "projects/timeline", locals: { project: self }
     broadcast_replace_to self, target: ActionView::RecordIdentifier.dom_id(self, :angles),
                                partial: "projects/angles", locals: { project: self }
+    broadcast_replace_to self, target: ActionView::RecordIdentifier.dom_id(self, :menu),
+                               partial: "projects/menu", locals: { project: self }
   end
 end

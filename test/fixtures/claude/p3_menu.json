@@ -1,0 +1,80 @@
+{
+  "items": [
+    {
+      "code": "I1", "group": "image", "recipe": "nb_image", "title": "Antes e depois no catálogo",
+      "aspect_ratio": "4:5", "duration_seconds": null, "angle_key": "chao_para_catalogo",
+      "concept": "Foto do chão ao lado do catálogo em fundo branco, com o título em destaque.",
+      "beats": [], "media_paths": [ "docs/screenshots/galeria.png" ], "needs_user_media": null,
+      "caption_overlay": null, "recommended": true
+    },
+    {
+      "code": "I2", "group": "image", "recipe": "nb_image", "title": "Grade de catálogo",
+      "aspect_ratio": "1:1", "duration_seconds": null, "angle_key": "chao_para_catalogo",
+      "concept": "Grade de peças em fundo branco, como a vitrine de uma loja pequena.",
+      "beats": [], "media_paths": [ "docs/screenshots/galeria.png" ], "needs_user_media": null,
+      "caption_overlay": null, "recommended": false
+    },
+    {
+      "code": "I3", "group": "image", "recipe": "nb_image", "title": "Lote do dia",
+      "aspect_ratio": "9:16", "duration_seconds": null, "angle_key": "lote_do_dia",
+      "concept": "Cartaz vertical do lote novo, com a frase de chamada em tamanho grande.",
+      "beats": [], "media_paths": [ "docs/screenshots/gerar-de-novo.png" ], "needs_user_media": null,
+      "caption_overlay": null, "recommended": false
+    },
+    {
+      "code": "I4", "group": "image", "recipe": "nb_image", "title": "Corrige com observação",
+      "aspect_ratio": "16:9", "duration_seconds": null, "angle_key": "corrige_com_observacao",
+      "concept": "Link preview com a tela de Gerar de novo e a frase sobre a observação.",
+      "beats": [], "media_paths": [ "docs/screenshots/gerar-de-novo.png" ], "needs_user_media": null,
+      "caption_overlay": null, "recommended": false
+    },
+    {
+      "code": "V1", "group": "vertical", "recipe": "kling_reference", "title": "Look no celular",
+      "aspect_ratio": "9:16", "duration_seconds": 10, "angle_key": "um_video_por_peca",
+      "concept": "Pessoa vestindo o look escolhido, filmada de celular, em plano curto.",
+      "beats": [ "0-3s: a pessoa segura a peça", "3-6s: veste a peça e ajusta o caimento", "6-10s: olha para a câmera" ],
+      "media_paths": [ "docs/screenshots/mobile.png" ], "needs_user_media": null, "caption_overlay": null,
+      "recommended": true
+    },
+    {
+      "code": "V2", "group": "vertical", "recipe": "kling_magic", "title": "A peça sobe do chão",
+      "aspect_ratio": "9:16", "duration_seconds": 5, "angle_key": "chao_para_catalogo",
+      "concept": "A peça do chão se levanta sozinha e veste uma pessoa, num plano contínuo.",
+      "beats": [ "0-2s: a peça parada no chão", "2-4s: a peça se levanta e veste alguém" ],
+      "media_paths": [ "docs/screenshots/adicionar-peca.png" ], "needs_user_media": null, "caption_overlay": null,
+      "recommended": false
+    },
+    {
+      "code": "V3", "group": "vertical", "recipe": "kling_reference", "title": "Seleção de look",
+      "aspect_ratio": "9:16", "duration_seconds": 5, "angle_key": "lote_do_dia",
+      "concept": "Duas peças escolhidas viram um look, mostrado em uso por uma pessoa.",
+      "beats": [ "0-2s: as duas peças selecionadas", "2-5s: o look vestido" ],
+      "media_paths": [ "docs/screenshots/selecao-look.png" ], "needs_user_media": null, "caption_overlay": null,
+      "recommended": false
+    },
+    {
+      "code": "H1", "group": "horizontal", "recipe": "kling_keyframes", "title": "Da foto ao catálogo",
+      "aspect_ratio": "16:9", "duration_seconds": 10, "angle_key": "chao_para_catalogo",
+      "concept": "Navegador com a galeria, a foto do chão se transforma em catálogo e um cartão final.",
+      "beats": [ "0-3s: a galeria no navegador", "3-7s: a foto vira catálogo", "7-10s: o cartão final" ],
+      "media_paths": [ "docs/screenshots/galeria.png", "docs/screenshots/adicionar-peca.png" ],
+      "needs_user_media": null, "caption_overlay": null, "recommended": true
+    },
+    {
+      "code": "H2", "group": "horizontal", "recipe": "kling_keyframes", "title": "Lote no ar",
+      "aspect_ratio": "16:9", "duration_seconds": 10, "angle_key": "lote_do_dia",
+      "concept": "Tela de vídeos com o lote do dia e um cartão final com o convite.",
+      "beats": [ "0-4s: a tela de vídeos", "4-10s: o cartão final" ],
+      "media_paths": [ "docs/screenshots/videos.png" ], "needs_user_media": null, "caption_overlay": null,
+      "recommended": false
+    },
+    {
+      "code": "H3", "group": "horizontal", "recipe": "kling_keyframes", "title": "Observação e refação",
+      "aspect_ratio": "16:9", "duration_seconds": 10, "angle_key": "corrige_com_observacao",
+      "concept": "Janela de Gerar de novo abre, recebe uma observação e o resultado é refeito.",
+      "beats": [ "0-4s: a janela Gerar de novo", "4-10s: o resultado refeito" ],
+      "media_paths": [ "docs/screenshots/gerar-de-novo.png" ], "needs_user_media": null, "caption_overlay": null,
+      "recommended": false
+    }
+  ]
+}

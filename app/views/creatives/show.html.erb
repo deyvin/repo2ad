@@ -1,0 +1,32 @@
+<% content_for :title, "Criativos · Repo2Ad" %>
+
+<%= turbo_stream_from @project %>
+
+<p class="text-sm text-ink-soft">Projeto de <%= project_title(@project) %></p>
+<h1 class="mt-2 max-w-[18ch] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Escolha os criativos</h1>
+
+<section class="mt-10 min-w-0 border-2 border-rule bg-sheet p-5" aria-labelledby="promises_heading">
+  <h2 id="promises_heading" class="text-sm font-semibold uppercase tracking-widest text-ink-soft">O que podemos e não podemos prometer</h2>
+  <div class="mt-4 grid gap-6 sm:grid-cols-2">
+    <div>
+      <p class="font-semibold">Podemos dizer</p>
+      <ul class="mt-2 list-disc space-y-1 pl-5 text-sm wrap-anywhere">
+        <% brief_claims(@project, "can_claim").each do |claim| %>
+          <li><%= claim %></li>
+        <% end %>
+      </ul>
+    </div>
+    <div>
+      <p class="font-semibold text-magenta">Não podemos dizer</p>
+      <ul class="mt-2 list-disc space-y-1 pl-5 text-sm wrap-anywhere">
+        <% brief_claims(@project, "must_not_claim").each do |claim| %>
+          <li><%= claim %></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<%= form_with url: project_creatives_path(@project), method: :post, class: "mt-10 min-w-0" do %>
+  <%= render "projects/menu", project: @project %>
+<% end %>

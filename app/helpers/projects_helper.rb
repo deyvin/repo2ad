@@ -63,4 +63,30 @@ module ProjectsHelper
   def angle_list(project)
     Array(project.angles.is_a?(Hash) ? project.angles["angles"] : nil)
   end
+
+  def creative_groups
+    { "image" => "Imagens", "vertical" => "Vídeos verticais 9:16", "horizontal" => "Vídeos horizontais 16:9" }
+  end
+
+  def creative_format(creative)
+    duration = creative.duration ? "#{creative.duration} s" : "imagem"
+    "#{creative.aspect_ratio} · #{duration}"
+  end
+
+  RECIPE_LABELS = {
+    "nb_image" => "Imagem (Nano Banana)",
+    "kling_reference" => "Vídeo com referência (Kling)",
+    "kling_magic" => "Transformação em plano único (Kling)",
+    "kling_keyframes" => "Quadro inicial e final (Kling)"
+  }.freeze
+
+  def recipe_label(recipe)
+    RECIPE_LABELS.fetch(recipe, recipe)
+  end
+
+  # Promessas do brief: "can_claim" (pode dizer) ou "must_not_claim" (não pode dizer), só o texto.
+  def brief_claims(project, key)
+    items = project.brief.is_a?(Hash) ? Array(project.brief[key]) : []
+    items.map { |item| item.is_a?(Hash) ? item["claim"] : item }.compact_blank
+  end
 end

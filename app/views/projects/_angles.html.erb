@@ -24,6 +24,10 @@
         </li>
       <% end %>
     </ol>
+    <% if project.status == "awaiting_selection" %>
+      <%= link_to "Continuar: escolher os criativos", project_creatives_path(project),
+            class: "mt-8 inline-block bg-ink px-6 py-3 font-semibold text-sheet hover:bg-magenta" %>
+    <% end %>
   <% elsif project.status == "planning" %>
     <p class="text-lg font-semibold">Gerando ângulos de mensagem…</p>
   <% end %>
