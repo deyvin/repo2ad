@@ -1,0 +1,30 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - .:/rails
+      - bundle:/usr/local/bundle
+      # Higgsfield CLI login from the host (read-write: the CLI may refresh the token). Container runs as root.
+      - ~/.config/higgsfield:/root/.config/higgsfield
+    command: ["./bin/rails", "server", "-b", "0.0.0.0"]
+
+  css:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/rails
+      - bundle:/usr/local/bundle
+    entrypoint: []
+    command: ["./bin/rails", "tailwindcss:watch[always]"]
+    tty: true
+
+volumes:
+  bundle:

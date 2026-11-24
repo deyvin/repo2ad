@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title><%= content_for(:title) || "Repo2Ad" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Repo2Ad">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&display=swap">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-dvh">
+    <header class="mx-auto flex max-w-3xl items-baseline justify-between px-6 pt-8 sm:px-10">
+      <%= link_to root_path, class: "text-xl font-extrabold tracking-tight" do %>
+        Repo<span class="text-magenta">2</span>Ad
+      <% end %>
+      <p class="text-sm text-ink-soft">Do repositório ao anúncio</p>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-6 pb-20 pt-12 sm:px-10">
+      <%= yield %>
+    </main>
+  </body>
+</html>

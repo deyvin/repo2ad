@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* Repo2Ad: neutral identity, separate from the brand of any analyzed product.
+   Cool proof-paper base, one process-magenta accent, crop marks as the signature detail. */
+@theme {
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  --color-proof: #eceef1;
+  --color-sheet: #f8f9fa;
+  --color-ink: #15181d;
+  --color-ink-soft: #5b616b;
+  --color-rule: #c9cdd4;
+  --color-magenta: #c2186b;
+}
+
+@layer base {
+  html {
+    background: var(--color-proof);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-magenta);
+    color: var(--color-sheet);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-magenta);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Printer's crop marks just outside the four corners of a sheet. */
+  .crop-marks {
+    position: relative;
+  }
+
+  .crop-marks::before {
+    --mark: 18px;
+    --edge: calc(var(--mark) + 8px);
+    --line: linear-gradient(var(--color-ink), var(--color-ink));
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--edge));
+    pointer-events: none;
+    background:
+      var(--line) left var(--edge) top 0 / 1px var(--mark) no-repeat,
+      var(--line) left 0 top var(--edge) / var(--mark) 1px no-repeat,
+      var(--line) right var(--edge) top 0 / 1px var(--mark) no-repeat,
+      var(--line) right 0 top var(--edge) / var(--mark) 1px no-repeat,
+      var(--line) left var(--edge) bottom 0 / 1px var(--mark) no-repeat,
+      var(--line) left 0 bottom var(--edge) / var(--mark) 1px no-repeat,
+      var(--line) right var(--edge) bottom 0 / 1px var(--mark) no-repeat,
+      var(--line) right 0 bottom var(--edge) / var(--mark) 1px no-repeat;
+  }
+}

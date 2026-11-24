@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+# If running the rails server (with or without extra flags like -b), create or migrate the databases.
+if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"

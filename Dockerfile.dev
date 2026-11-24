@@ -1,0 +1,33 @@
+# Development image for Repo2Ad (used by docker-compose.yml).
+ARG RUBY_VERSION=3.4.6
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+# libvips + libheif: HEIC->JPEG, EXIF and frame composition (ruby-vips).
+# ffmpeg: video probe and contact sheets. ca-certificates: HTTPS for the Higgsfield CLI.
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      build-essential git pkg-config curl ca-certificates sqlite3 libyaml-dev \
+      libvips libheif1 libheif-plugin-libde265 ffmpeg && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Node only runs the Higgsfield CLI (no JS bundling). Login comes from the host (see docker-compose.yml).
+COPY --from=docker.io/library/node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=docker.io/library/node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    npm install -g @higgsfield/cli@1.2.2 && \
+    npm cache clean --force
+
+ENV RAILS_ENV=development \
+    BUNDLE_PATH=/usr/local/bundle \
+    SOLID_QUEUE_IN_PUMA=1
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+COPY . .
+
+EXPOSE 3000
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
