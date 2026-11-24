@@ -1,4 +1,5 @@
-<% if HiggsfieldConnection.current.connected? %>
+<% case higgsfield_connection_state %>
+<% when :connected %>
   <div class="flex items-center gap-3 text-sm text-ink-soft">
     <span class="flex items-center gap-2">
       <span class="size-2 rounded-full bg-magenta" aria-hidden="true"></span>
@@ -11,6 +12,8 @@
           form: { data: { turbo_confirm: "Desconectar a Higgsfield?" } },
           class: "cursor-pointer underline underline-offset-4 hover:text-ink" %>
   </div>
+<% when :encryption_error %>
+  <p class="text-sm font-semibold text-magenta" role="status">Higgsfield: configure as chaves de criptografia (.env)</p>
 <% else %>
   <%= link_to "Conectar Higgsfield", connect_higgsfield_path, data: { turbo: false },
         class: "text-sm font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>

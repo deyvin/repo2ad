@@ -1,5 +1,5 @@
 # Saldo de créditos da Higgsfield no topo, carregado num Turbo Frame preguiçoso:
-# uma chamada lenta ou com erro ao MCP nunca trava a página.
+# qualquer falha (MCP, rede, criptografia, o que for) vira "saldo indisponível" com HTTP 200 e log.
 class BalancesController < ApplicationController
   CACHE_KEY = "higgsfield/balance".freeze
 
@@ -8,8 +8,8 @@ class BalancesController < ApplicationController
       result = Higgsfield::Mcp::Session.new.call("balance")
       result.is_a?(Hash) ? result.slice("credits", "subscription_plan_type") : nil
     end
-  rescue Higgsfield::Error => e
-    Rails.logger.warn("[repo2ad] balance unavailable: #{e.message}")
+  rescue StandardError => e
+    Rails.logger.warn("[repo2ad] balance unavailable: #{e.class}: #{e.message}")
     @balance = nil
   ensure
     render layout: false

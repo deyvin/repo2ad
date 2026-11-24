@@ -1,11 +1,14 @@
 # Login no servidor MCP da Higgsfield pelo navegador (OAuth 2.1 + PKCE, registro dinâmico de cliente).
+# O detalhe técnico de cada falha vai só para o log; o usuário vê a mensagem em português.
 class HiggsfieldConnectionsController < ApplicationController
+  LOGIN_FAILED = "O login na Higgsfield não foi concluído. Tente conectar de novo.".freeze
+
   # GET /higgsfield/connect
   def new
     redirect_to Higgsfield::Mcp::Session.new.authorization_url, allow_other_host: true
   rescue StandardError => e
     Rails.logger.error("[repo2ad] higgsfield connect failed: #{e.class}: #{e.message}")
-    redirect_to root_path, alert: "Não foi possível iniciar o login na Higgsfield: #{e.message}"
+    redirect_to root_path, alert: LOGIN_FAILED
   end
 
   # GET /higgsfield/callback
@@ -15,7 +18,7 @@ class HiggsfieldConnectionsController < ApplicationController
     redirect_to root_path, notice: "Higgsfield conectada."
   rescue StandardError => e
     Rails.logger.error("[repo2ad] higgsfield callback failed: #{e.class}: #{e.message}")
-    redirect_to root_path, alert: "O login na Higgsfield não foi concluído: #{e.message}"
+    redirect_to root_path, alert: LOGIN_FAILED
   end
 
   # DELETE /higgsfield/connection
