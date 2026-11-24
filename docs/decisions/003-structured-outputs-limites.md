@@ -25,3 +25,5 @@ Data: 2026-11-24. Testado: os 5 schemas da §5 enviados ao `anthropic/claude-opu
 2. A validação no Ruby com `json_schemer` contra o schema completo é **obrigatória em toda etapa (P1–P5)**, não só no P4.
    Se falhar, a etapa pede de novo ao modelo com a lista de erros, no máximo 2 vezes (mesma regra do P4), e depois
    falha com mensagem em português.
+
+P5: escala do score explícita no prompt, aprovada pelo CTO.
