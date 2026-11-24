@@ -2,14 +2,14 @@ require "test_helper"
 require "tmpdir"
 require_relative "../support/fake_github_api"
 
-# API de mentira que falha ao consultar o repositório com o erro dado. Sem rede.
+# API de mentira que falha ao consultar o repositório. Recebe um erro por chamada; a última se repete. Sem rede.
 class FailingGithubApi
-  def initialize(error)
-    @error = error
+  def initialize(*errors)
+    @errors = errors
   end
 
   def repository(**)
-    raise @error
+    raise(@errors.size > 1 ? @errors.shift : @errors.first)
   end
 end
 
@@ -137,6 +137,24 @@ class IngestRepoJobTest < ActiveJob::TestCase
     job.perform_now
 
     assert_equal "failed", project.reload.status
+  end
+
+  test "o limite de 3 tentativas é total, mesmo misturando Retry-After e backoff" do
+    IngestRepoJob.api_factory = lambda do
+      FailingGithubApi.new(Repo::TransientError.new("limite", retry_after: 60),
+                           Repo::TransientError.new("rede"),
+                           Repo::TransientError.new("limite", retry_after: 30))
+    end
+    project = Project.create!(repo_url: CABIDE_URL)
+    job = IngestRepoJob.new(project.id)
+
+    job.perform_now
+    job.perform_now
+    assert_equal "ingesting", project.reload.status
+
+    job.perform_now
+    assert_equal "failed", project.reload.status
+    assert_equal "O GitHub não respondeu. Tente de novo em alguns minutos.", project.error
   end
 
   test "404 ou repositório privado não é transitório: failed direto, sem reagendar" do

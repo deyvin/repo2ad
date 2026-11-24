@@ -38,15 +38,15 @@ class IngestRepoJob < ApplicationJob
     project.transition_to!("analyzing")
     AnalyzeProductJob.perform_later(project.id)
   rescue Repo::TransientError => e
-    # Sem Retry-After, o retry_on faz o backoff e conta as tentativas.
-    raise unless e.retry_after
-
-    # Com Retry-After (ou X-RateLimit-Reset), agenda para quando o GitHub liberar. O limite é o mesmo
-    # (executions), porque o retry_on não conta essas tentativas.
-    if executions < RETRY_ATTEMPTS
+    # Limite total de RETRY_ATTEMPTS tentativas, contado por executions, nos dois caminhos.
+    if executions >= RETRY_ATTEMPTS
+      self.class.fail_project(project_id, GIVE_UP_MESSAGE)
+    elsif e.retry_after
+      # Retry-After (ou X-RateLimit-Reset): agenda para quando o GitHub liberar.
       retry_job wait: e.retry_after
     else
-      self.class.fail_project(project_id, GIVE_UP_MESSAGE)
+      # Sem Retry-After: o retry_on faz o backoff polinomial e conta as tentativas.
+      raise
     end
   rescue Repo::Error, Media::Probe::Error, Media::Normalizer::Error => e
     self.class.fail_project(project_id, e.message)
