@@ -35,10 +35,10 @@ class CreativePipelineTest < ActiveJob::TestCase
     assert_equal 2, @gateway.uploads.size
 
     run_polls
-    perform_enqueued_jobs(only: RenderCreativeJob)
+    assert_enqueued_with(job: ReviewCreativeJob, args: [ creative ]) { perform_enqueued_jobs(only: RenderCreativeJob) }
 
     creative.reload
-    assert_equal "done", creative.status
+    assert_equal "reviewing", creative.status # P5 a seguir
     assert creative.result.attached?
     assert_equal %w[done], creative.render_steps.pluck(:status)
   end
@@ -69,7 +69,7 @@ class CreativePipelineTest < ActiveJob::TestCase
     run_polls
     perform_enqueued_jobs(only: RenderCreativeJob)
     creative.reload
-    assert_equal "done", creative.status
+    assert_equal "reviewing", creative.status
     assert_equal main.reload.output.blob, creative.result.blob
   end
 

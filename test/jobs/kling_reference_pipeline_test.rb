@@ -48,7 +48,7 @@ class KlingReferencePipelineTest < ActiveJob::TestCase
 
     perform_enqueued_jobs(only: PollRenderStepJob)
     perform_enqueued_jobs(only: RenderCreativeJob)
-    assert_equal "done", creative.reload.status
+    assert_equal "reviewing", creative.reload.status
   end
 
   test "V3 com quadro inicial composto (foto 3:4 sobre fundo da marca): arquivo real em 9:16" do

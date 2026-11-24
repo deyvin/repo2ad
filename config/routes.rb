@@ -5,6 +5,9 @@ Rails.application.routes.draw do
 
   resources :projects, only: %i[new create show] do
     resource :audience, only: %i[show update]
+    resources :creatives, only: [] do
+      resource :regeneration, only: :create # "Gerar de novo" (T11)
+    end
   end
 
   scope :higgsfield, controller: :higgsfield_connections do

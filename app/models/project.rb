@@ -10,7 +10,7 @@ class Project < ApplicationRecord
     "planning" => %w[awaiting_selection],
     "awaiting_selection" => %w[generating],
     "generating" => %w[done],
-    "done" => [],
+    "done" => %w[generating], # "Gerar de novo" (T11)
     "failed" => []
   }.freeze
 
@@ -38,6 +38,14 @@ class Project < ApplicationRecord
 
   def can_transition_to?(new_status)
     self.class.transition_allowed?(status, new_status)
+  end
+
+  # Volta para done quando todos os criativos selecionados terminaram (done ou failed).
+  def complete_generation!
+    return unless status == "generating"
+    return if creatives.where(selected: true).where.not(status: Creative::FINISHED).exists?
+
+    transition_to!("done")
   end
 
   def transition_to!(new_status, error: nil)

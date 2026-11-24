@@ -123,7 +123,8 @@ module Recipes
     def finish!
       main = @creative.render_steps.find_by!(name: "main")
       @creative.result.attach(main.output.blob)
-      @creative.update!(status: "done", error: nil) # T11 troca por reviewing + P5
+      @creative.update!(status: "reviewing", error: nil)
+      ReviewCreativeJob.perform_later(@creative) # P5 (§3.5)
       :done
     end
 

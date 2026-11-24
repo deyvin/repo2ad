@@ -1,0 +1,8 @@
+{
+  "verdict": "approve_with_notes",
+  "score": 8,
+  "issues": [
+    { "severity": "baixa", "what": "Os rótulos ANTES e DEPOIS ficaram abaixo das fotos, não acima.", "where": "abaixo das duas fotos" }
+  ],
+  "fix_instructions": null
+}

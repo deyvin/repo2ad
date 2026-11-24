@@ -19,15 +19,26 @@ module Claude
     }.freeze
     MAX_RETRIES = 2
     # Imagem enviada ao modelo: path como o repositório (ou o upload) a chama, dimensões e os bytes JPEG/PNG.
-    Image = Data.define(:path, :width, :height, :media_type, :data)
+    IMAGE_MAX_SIDE = 1568 # acima disso o modelo reduz de qualquer jeito; fica abaixo de 5 MB por imagem
+    Image = Data.define(:path, :width, :height, :media_type, :data) do
+      # Lê um arquivo de imagem e devolve um JPEG de até IMAGE_MAX_SIDE px. width/height são os do original.
+      def self.from_file(file, path:)
+        original = Vips::Image.new_from_file(file.to_s) # só o cabeçalho é lido aqui
+        thumb = Vips::Image.thumbnail(file.to_s, IMAGE_MAX_SIDE, height: IMAGE_MAX_SIDE, size: :down)
+        thumb = thumb.flatten(background: [ 255, 255, 255 ]) if thumb.has_alpha?
+        new(path: path, width: original.width, height: original.height, media_type: "image/jpeg",
+            data: thumb.jpegsave_buffer(Q: 85, keep: :none))
+      end
+    end
     RETRY_INSTRUCTION = "Your previous answer did not pass validation against the JSON Schema. " \
                         "Fix every error below and answer again with the complete JSON object only.".freeze
 
-    attr_reader :calls
+    attr_reader :calls, :responses
 
     def initialize(client: Client.new)
       @client = client
       @calls = []
+      @responses = [] # texto bruto de cada resposta, também as que não passaram na validação
     end
 
     def stage = self.class::STAGE
@@ -53,6 +64,7 @@ module Claude
       (MAX_RETRIES + 1).times do |attempt|
         response = @client.create(system: system_blocks, messages: messages, schema: schema, effort: effort, max_tokens: max_tokens)
         @calls << { attempt: attempt + 1, model: response.model, usage: response.usage }
+        @responses << response.text
         Rails.logger.info("[repo2ad] #{stage} tentativa #{attempt + 1}: #{response.model} #{response.usage.to_json}")
 
         data, errors = parse_and_validate(response.text)

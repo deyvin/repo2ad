@@ -1,0 +1,9 @@
+{
+  "verdict": "regenerate",
+  "score": 3,
+  "issues": [
+    { "severity": "alta", "what": "O wordmark saiu escrito \"Cabidee\" em vez de \"Cabide.\" (letra a mais e sem o ponto final vermelho).", "where": "canto inferior esquerdo" },
+    { "severity": "baixa", "what": "A seta vermelha aparece duplicada.", "where": "entre as duas fotos" }
+  ],
+  "fix_instructions": "Spell the wordmark exactly \"Cabide.\" (six letters plus a small red period #c8432b); draw a single red arrow only."
+}
