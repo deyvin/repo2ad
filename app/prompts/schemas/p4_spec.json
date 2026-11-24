@@ -11,16 +11,16 @@
       "properties": {
         "name": { "type": "string", "enum": ["start_frame", "end_frame", "main"] },
         "kind": { "type": "string", "enum": ["compose", "nano_banana", "kling"] },
-        "model": { "type": ["string", "null"], "enum": ["nano_banana_2_1", "kling4_0", null] },
+        "model": { "anyOf": [ { "type": "string", "enum": ["nano_banana_2_1", "kling4_0"] }, { "type": "null" } ] },
         "prompt": { "type": ["string", "null"] },
         "params": { "type": "object", "additionalProperties": false,
           "required": ["aspect_ratio", "resolution", "duration", "mode", "thinking_level"],
           "properties": {
             "aspect_ratio": { "type": "string", "enum": ["1:1", "4:5", "9:16", "16:9"] },
             "resolution": { "type": "string", "enum": ["2k", "1080p"] },
-            "duration": { "type": ["integer", "null"], "enum": [5, 10, null] },
-            "mode": { "type": ["string", "null"], "enum": ["image-to-video", "reference-to-video", null] },
-            "thinking_level": { "type": ["string", "null"], "enum": ["high", null] } } },
+            "duration": { "anyOf": [ { "type": "integer", "enum": [5, 10] }, { "type": "null" } ] },
+            "mode": { "anyOf": [ { "type": "string", "enum": ["image-to-video", "reference-to-video"] }, { "type": "null" } ] },
+            "thinking_level": { "anyOf": [ { "type": "string", "enum": ["high"] }, { "type": "null" } ] } } },
         "inputs": { "type": "object", "additionalProperties": false, "required": ["image_references", "start_image", "end_image"],
           "properties": {
             "image_references": { "type": "array", "maxItems": 8, "items": { "type": "string" },

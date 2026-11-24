@@ -10,7 +10,7 @@
         "recipe": { "type": "string", "enum": ["nb_image", "kling_reference", "kling_magic", "kling_keyframes"] },
         "title": { "type": "string" },
         "aspect_ratio": { "type": "string", "enum": ["1:1", "4:5", "9:16", "16:9"] },
-        "duration_seconds": { "type": ["integer", "null"], "enum": [5, 10, null] },
+        "duration_seconds": { "anyOf": [ { "type": "integer", "enum": [5, 10] }, { "type": "null" } ] },
         "angle_key": { "type": "string" },
         "concept": { "type": "string", "description": "uma linha em pt-BR, como aparece no card" },
         "beats": { "type": "array", "maxItems": 4, "items": { "type": "string" } },
