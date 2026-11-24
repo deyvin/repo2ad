@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resources :projects, only: :new
+  resources :projects, only: %i[new create show]
 
   scope :higgsfield, controller: :higgsfield_connections do
     get :connect, action: :new, as: :connect_higgsfield

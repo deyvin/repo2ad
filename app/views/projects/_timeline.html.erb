@@ -1,0 +1,30 @@
+<div id="<%= dom_id(project, :timeline) %>" class="crop-marks min-w-0 bg-sheet p-6 sm:p-10">
+  <ol class="space-y-5" aria-label="Etapas da análise">
+    <% analysis_steps(project).each do |label, state| %>
+      <li class="flex items-center gap-4 <%= state == :pending ? "text-ink-soft" : "text-ink" %>"<%= ' aria-current="step"'.html_safe if state == :current %>>
+        <span class="grid size-7 shrink-0 place-items-center rounded-full border-2 <%= state == :pending ? "border-rule" : "border-ink" %>" aria-hidden="true">
+          <% if state == :done %>
+            <span class="text-sm font-bold">✓</span>
+          <% elsif state == :current %>
+            <span class="size-2.5 animate-pulse rounded-full bg-magenta"></span>
+          <% end %>
+        </span>
+        <span class="<%= "font-semibold" if state == :current %>"><%= label %></span>
+        <span class="sr-only">(<%= analysis_step_label(state) %>)</span>
+      </li>
+    <% end %>
+  </ol>
+
+  <% if project.status == "analyzing" %>
+    <p class="mt-8 text-lg font-semibold">Analisando produto…</p>
+  <% end %>
+
+  <% if project.status == "failed" %>
+    <div role="alert" class="mt-8 min-w-0 border-l-4 border-magenta bg-proof px-4 py-3">
+      <p class="font-semibold">Não consegui analisar este repositório.</p>
+      <p class="mt-1 wrap-anywhere text-sm"><%= project.error %></p>
+    </div>
+    <%= link_to "Tentar com outra URL", new_project_path,
+          class: "mt-6 inline-block font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>
+  <% end %>
+</div>

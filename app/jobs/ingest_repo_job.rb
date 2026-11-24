@@ -34,6 +34,7 @@ class IngestRepoJob < ApplicationJob
     Repo::Selector.call(fetched.root).images.each do |image|
       create_media_input(project, fetched.root, image)
     end
+    normalize_uploads(project)
 
     project.transition_to!("analyzing")
     AnalyzeProductJob.perform_later(project.id)
@@ -63,6 +64,25 @@ class IngestRepoJob < ApplicationJob
     project.transition_to!("ingesting") if project.status == "draft"
     project.media_inputs.where(source: "repo").destroy_all
     FileUtils.rm_rf(File.join(self.class.repos_dir.to_s, project.id.to_s))
+  end
+
+  # Fotos enviadas pelo usuário chegam originais (HEIC, EXIF); aqui viram JPEG/PNG de no máximo 1568 px.
+  def normalize_uploads(project)
+    project.media_inputs.where(source: "upload").find_each do |media|
+      next unless media.file.attached?
+
+      media.file.blob.open do |original|
+        normalized = Media::Normalizer.call(original.path, max_side: MAX_IMAGE_SIDE)
+        begin
+          probe = Media::Probe.call(normalized)
+          media.update!(width: probe.width, height: probe.height)
+          name = "#{media.file.filename.base}#{File.extname(normalized)}"
+          File.open(normalized, "rb") { |io| media.file.attach(io: io, filename: name) }
+        ensure
+          FileUtils.rm_f(normalized)
+        end
+      end
+    end
   end
 
   def create_media_input(project, root, image)

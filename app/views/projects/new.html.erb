@@ -12,30 +12,43 @@
   Cole o link público do GitHub. A gente lê o código, entende o produto e sugere para quem vender.
 </p>
 
+<% url_error = @project.errors[:repo_url].first %>
+<% photos_error = @project.errors[:photos].first %>
+
 <div class="crop-marks mt-14 bg-sheet p-6 sm:p-10">
-  <form class="space-y-8">
-    <div>
-      <label for="repo_url" class="block text-base font-semibold">Link do repositório</label>
-      <input type="url" id="repo_url" name="repo_url" disabled
-             placeholder="https://github.com/dono/repositorio"
-             class="mt-3 w-full border-b-2 border-ink bg-transparent py-3 text-lg placeholder:text-ink-soft/70 focus:outline-none disabled:cursor-not-allowed">
-      <p class="mt-2 text-sm text-ink-soft">Também aceita <code class="wrap-anywhere">git@github.com:dono/repositorio.git</code>.</p>
+  <%= form_with model: @project, url: projects_path, class: "space-y-8" do |f| %>
+    <div class="min-w-0">
+      <%= f.label :repo_url, "Link do repositório", class: "block text-base font-semibold" %>
+      <%= f.text_field :repo_url, inputmode: "url", autocomplete: "off", spellcheck: false,
+            placeholder: "https://github.com/dono/repositorio",
+            aria: { invalid: url_error.present?, describedby: [ "repo_url_hint", ("repo_url_error" if url_error) ].compact.join(" ") },
+            class: [ "mt-3 w-full border-b-2 bg-transparent py-3 text-lg placeholder:text-ink-soft/70 focus:outline-none",
+                     url_error ? "border-magenta" : "border-ink" ] %>
+      <% if url_error %>
+        <p id="repo_url_error" role="alert" class="mt-2 text-sm font-semibold text-magenta"><%= url_error %></p>
+      <% end %>
+      <p id="repo_url_hint" class="mt-2 text-sm text-ink-soft">Também aceita <code class="wrap-anywhere">git@github.com:dono/repositorio.git</code>.</p>
     </div>
 
-    <div>
-      <p class="text-base font-semibold">Fotos reais do produto <span class="font-normal text-ink-soft">(opcional)</span></p>
-      <div class="mt-3 grid min-h-36 place-items-center border-2 border-dashed border-rule px-6 py-8 text-center text-ink-soft">
-        <p>Arraste até 8 fotos aqui. JPG, PNG ou HEIC.<br>
-          <span class="text-sm">Ajudam em anúncios de antes e depois.</span></p>
-      </div>
+    <div class="min-w-0">
+      <p id="photos_label" class="text-base font-semibold">Fotos reais do produto <span class="font-normal text-ink-soft">(opcional)</span></p>
+      <label data-controller="dropzone"
+             data-action="dragover->dropzone#over dragleave->dropzone#leave drop->dropzone#drop"
+             class="mt-3 grid min-h-36 cursor-pointer place-items-center border-2 border-dashed px-4 py-8 text-center text-ink-soft transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-magenta <%= photos_error ? "border-magenta" : "border-rule" %>">
+        <span class="wrap-anywhere">Arraste até 8 fotos aqui ou toque para escolher. JPG, PNG ou HEIC.<br>
+          <span class="text-sm">Ajudam em anúncios de antes e depois.</span></span>
+        <span data-dropzone-target="list" aria-live="polite" class="mt-3 text-sm font-semibold text-ink"></span>
+        <%= f.file_field :photos, multiple: true, aria: { labelledby: "photos_label" },
+              accept: "image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif",
+              class: "sr-only", data: { dropzone_target: "input", action: "change->dropzone#show" } %>
+      </label>
+      <% if photos_error %>
+        <p role="alert" class="mt-2 text-sm font-semibold text-magenta"><%= photos_error %></p>
+      <% end %>
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
-      <button type="submit" disabled
-              class="bg-ink px-6 py-3 font-semibold text-sheet disabled:cursor-not-allowed disabled:opacity-60">
-        Analisar repositório
-      </button>
-      <p class="text-sm text-ink-soft">Ainda em construção: a análise chega nas próximas versões.</p>
+      <%= f.submit "Analisar repositório", class: "cursor-pointer bg-ink px-6 py-3 font-semibold text-sheet hover:bg-magenta" %>
     </div>
-  </form>
+  <% end %>
 </div>

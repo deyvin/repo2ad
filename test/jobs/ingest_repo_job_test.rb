@@ -1,6 +1,7 @@
 require "test_helper"
 require "tmpdir"
 require_relative "../support/fake_github_api"
+require_relative "../support/media_fixtures"
 
 # API de mentira que falha ao consultar o repositório. Recebe um erro por chamada; a última se repete. Sem rede.
 class FailingGithubApi
@@ -14,6 +15,8 @@ class FailingGithubApi
 end
 
 class IngestRepoJobTest < ActiveJob::TestCase
+  include MediaFixtures
+
   CABIDE_URL = "https://github.com/deyvin/cabide".freeze
 
   setup do
@@ -166,6 +169,20 @@ class IngestRepoJobTest < ActiveJob::TestCase
     project.reload
     assert_equal "failed", project.status
     assert_match "não encontrado", project.error
+  end
+
+  test "fotos enviadas são normalizadas no job, com o lado maior em 1568 px" do
+    IngestRepoJob.api_factory = -> { FakeGithubApi.new }
+    project = Project.create!(repo_url: CABIDE_URL)
+    media = project.media_inputs.create!(source: "upload")
+    path = make_image(@dir, "grande.png", size: "2000x1000")
+    media.file.attach(io: File.open(path, "rb"), filename: "grande.png")
+
+    IngestRepoJob.perform_now(project.id)
+
+    media.reload
+    assert_equal [ 1568, 784 ], [ media.width, media.height ]
+    assert media.file.attached?
   end
 
   test "nova tentativa apaga o que a anterior deixou e não duplica mídia" do

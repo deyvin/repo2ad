@@ -25,6 +25,8 @@ class Project < ApplicationRecord
   validates :error, presence: true, if: -> { status == "failed" }
   # Vale para qualquer update!(status:), não só para transition_to!. A criação fica livre.
   validate :status_follows_flow, on: :update, if: :will_save_change_to_status?
+  # A linha do tempo da tela de análise se atualiza sozinha quando o status muda (Turbo Stream).
+  after_update_commit :broadcast_timeline, if: :saved_change_to_status?
 
   def self.transition_allowed?(from, to)
     from = from.to_s
@@ -52,5 +54,10 @@ class Project < ApplicationRecord
     return if self.class.transition_allowed?(status_in_database, status)
 
     errors.add(:status, "não pode passar de #{status_in_database} para #{status}")
+  end
+
+  def broadcast_timeline
+    broadcast_replace_to self, target: ActionView::RecordIdentifier.dom_id(self, :timeline),
+                               partial: "projects/timeline", locals: { project: self }
   end
 end
