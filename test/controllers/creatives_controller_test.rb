@@ -4,6 +4,13 @@ require_relative "../support/fake_claude"
 class CreativesControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
+  # FakeGateway cuja estimativa de custo falha, como quando a Higgsfield não responde.
+  class FailingCostGateway < Higgsfield::FakeGateway
+    def cost(**)
+      raise Higgsfield::RequestError, "A Higgsfield não respondeu"
+    end
+  end
+
   setup do
     @brief = JSON.parse(FakeClaude.fixture("p1_brief"))
     @project = Project.create!(repo_url: "https://github.com/deyvin/cabide", status: "awaiting_selection",
@@ -31,7 +38,26 @@ class CreativesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", "Imagens"
     assert_select "h2", "Vídeos verticais 9:16"
     assert_select "li", /Grátis \/ sem custo/
-    assert_select "input[type=submit][value=Gerar]"
+    assert_select "input[type=submit][value^=Gerar]"
+  end
+
+  test "cada card mostra os créditos estimados e o botão Gerar mostra o total dos marcados" do
+    get project_creatives_path(@project)
+
+    assert_select "input[type=checkbox][value=?][data-credits=?]", @image.id.to_s, "2.0"
+    assert_select "input[type=checkbox][value=?][data-credits=?]", @video.id.to_s, "4.0"
+    assert_select "span", /≈ 2 créditos/
+    assert_select "input[type=submit][value=?]", "Gerar (≈ 2 créditos)"
+  end
+
+  test "sem estimativa (Higgsfield fora do ar), o card avisa e o botão diz só Gerar" do
+    Higgsfield::Gateway.current = FailingCostGateway.new
+
+    get project_creatives_path(@project)
+
+    assert_response :success
+    assert_select "span", /estimativa indisponível/
+    assert_select "input[type=submit][value=?]", "Gerar"
   end
 
   test "generating redireciona para os resultados" do

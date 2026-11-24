@@ -17,6 +17,14 @@ class BalanceGuardTest < ActiveSupport::TestCase
     end
   end
 
+  test "custo zero passa, mesmo com saldo zero" do
+    gateway = Higgsfield::FakeGateway.new(credits: 0.0)
+
+    assert_nothing_raised do
+      Higgsfield::BalanceGuard.check!(0, gateway: gateway, connection: connected_connection)
+    end
+  end
+
   test "saldo insuficiente diz quanto precisa e quanto tem, em português" do
     gateway = Higgsfield::FakeGateway.new(credits: 10.0)
 
@@ -24,7 +32,24 @@ class BalanceGuardTest < ActiveSupport::TestCase
       Higgsfield::BalanceGuard.check!(39.5, gateway: gateway, connection: connected_connection)
     end
 
-    assert_equal "Saldo insuficiente: precisa de 39,50 créditos, você tem 10,00", error.message
+    assert_equal "Saldo insuficiente: precisa de 39,5 créditos, você tem 10", error.message
+  end
+
+  test "milhar com ponto e decimal com vírgula, como no cabeçalho" do
+    gateway = Higgsfield::FakeGateway.new(credits: 2950.5)
+
+    error = assert_raises(Higgsfield::BalanceGuard::Insufficient) do
+      Higgsfield::BalanceGuard.check!(3120.25, gateway: gateway, connection: connected_connection)
+    end
+
+    assert_equal "Saldo insuficiente: precisa de 3.120,25 créditos, você tem 2.950,5", error.message
+  end
+
+  test "custo nil ou negativo é erro de programação (ArgumentError)" do
+    gateway = Higgsfield::FakeGateway.new(credits: 10.0)
+
+    assert_raises(ArgumentError) { Higgsfield::BalanceGuard.check!(nil, gateway: gateway, connection: connected_connection) }
+    assert_raises(ArgumentError) { Higgsfield::BalanceGuard.check!(-1, gateway: gateway, connection: connected_connection) }
   end
 
   test "saldo que não pode ser lido vira erro claro" do

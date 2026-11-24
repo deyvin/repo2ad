@@ -14,12 +14,14 @@
               <label class="flex h-full cursor-pointer items-start gap-3 border-2 border-rule bg-sheet p-4 has-[:checked]:border-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-magenta">
                 <input type="checkbox" name="creative_ids[]" value="<%= creative.id %>" <%= "checked" if creative.selected %>
                        data-selection-target="checkbox" data-action="change->selection#update"
+                       data-credits="<%= creative_credits(creative) %>"
                        class="mt-1 size-4 shrink-0 accent-ink" aria-describedby="creative_<%= creative.id %>">
                 <span class="min-w-0">
                   <span class="block text-xs font-semibold uppercase tracking-widest text-ink-soft"><%= creative.code %> · <%= creative_format(creative) %></span>
                   <span class="mt-1 block font-semibold wrap-anywhere"><%= creative.title %></span>
                   <span id="creative_<%= creative.id %>" class="mt-1 block text-sm text-ink-soft wrap-anywhere"><%= creative.concept.to_h["concept"] %></span>
                   <span class="mt-2 block text-xs text-ink-soft"><%= recipe_label(creative.recipe) %></span>
+                  <span class="mt-1 block text-xs font-semibold text-ink"><%= credits_label(creative_credits(creative)) %></span>
                 </span>
               </label>
             </li>
@@ -30,7 +32,7 @@
 
     <div class="mt-8 flex flex-wrap items-center gap-4">
       <p class="text-sm font-semibold" aria-live="polite" data-selection-target="count"><%= creatives.count(&:selected) %> selecionado(s)</p>
-      <%= submit_tag "Gerar", data: { selection_target: "submit" },
+      <%= submit_tag generate_label(creatives), data: { selection_target: "submit" },
             class: "cursor-pointer bg-ink px-6 py-3 font-semibold text-sheet hover:bg-magenta disabled:cursor-not-allowed disabled:opacity-60" %>
     </div>
   <% end %>

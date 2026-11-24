@@ -68,6 +68,28 @@ module ProjectsHelper
     { "image" => "Imagens", "vertical" => "Vídeos verticais 9:16", "horizontal" => "Vídeos horizontais 16:9" }
   end
 
+  # Créditos estimados de um criativo (Costs::Estimator, em cache). Nil se a Higgsfield não responder.
+  def creative_credits(creative)
+    Costs::Estimator.for(creative).total
+  rescue Higgsfield::Error
+    nil
+  end
+
+  def credits_label(credits)
+    return "estimativa indisponível" if credits.nil?
+
+    "≈ #{Higgsfield::BalanceGuard.format_credits(credits)} créditos"
+  end
+
+  # Texto do botão Gerar com o total dos marcados; sem estimativa completa, só "Gerar".
+  def generate_label(creatives)
+    selected = creatives.select(&:selected)
+    totals = selected.map { |creative| creative_credits(creative) }
+    return "Gerar" if selected.empty? || totals.any?(&:nil?)
+
+    "Gerar (#{credits_label(totals.sum)})"
+  end
+
   def creative_format(creative)
     duration = creative.duration ? "#{creative.duration} s" : "imagem"
     "#{creative.aspect_ratio} · #{duration}"
