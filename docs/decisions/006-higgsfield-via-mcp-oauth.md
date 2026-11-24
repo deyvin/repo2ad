@@ -82,3 +82,12 @@ o retorno de `models_explore get` dos dois modelos e as estimativas estão em
 - `cost` usa `estimate_*_cost` (T13). `balance` já é usado no topo.
 - Ferramentas a avaliar depois, não usadas agora: `reframe` e `outpaint_image`, para o quadro inicial no aspecto
   final (D6, receita `kling_reference`).
+
+## Nota (2026-11-24, T10): quadro inicial reenquadrado (D6) na `kling_reference`
+Escolha: **(a) Nano Banana com outpaint pedido no prompt**, como o §6.2 já descreve. A foto real entra como
+`image_references` e o prompt pede para manter o original no centro e estender as bordas até o aspecto final.
+O `params.aspect_ratio` do Nano Banana define o aspecto de saída (no I1 real, 4:5 saiu exato). O `compose` local
+continua aceito pelo P4 como alternativa grátis.
+Garantia: antes de submeter o Kling, o `Recipes::Base` mede o arquivo do quadro inicial com o `Media::Probe`. Se o
+aspecto não for o do vídeo, o Kling não é submetido e o criativo falha com mensagem clara, sem gastar o vídeo.
+`reframe` e `outpaint_image` do MCP não são usados: não seriam mais simples e custariam uma chamada a mais por criativo.

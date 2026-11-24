@@ -28,7 +28,7 @@ module Recipes
           compose!(step)
         else
           submit!(step)
-          return :submitted
+          return step.status == "failed" ? fail!(step) : :submitted
         end
       end
     end
@@ -64,12 +64,26 @@ module Recipes
 
     def submit!(step)
       spec = spec_for(step)
+      check_start_frame_aspect!(spec) if step.kind == "higgsfield" && spec["kind"] == "kling"
       job_id = @gateway.submit(model: spec["model"], prompt: spec["prompt"], params: spec["params"].to_h, media: media_for(spec))
       step.update!(hf_job_id: job_id, status: "submitted", error: nil)
       # O prazo de 30 min já vai no 1º poll: um retry dessa execução não recomeça a contagem.
       PollRenderStepJob.perform_later(step, PollRenderStepJob::TIMEOUT.from_now.iso8601)
     rescue Higgsfield::RequestError, Higgsfield::ConfigurationError => e
       step.update!(status: "failed", error: e.message)
+    end
+
+    # D6: o Kling herda o aspecto do quadro inicial. Mede o arquivo do step de origem antes de gastar o vídeo.
+    def check_start_frame_aspect!(spec)
+      match = STEP_REF.match(spec.dig("inputs", "start_image").to_s) or return
+      source = @creative.render_steps.find_by!(name: match[1])
+      return unless source.output.attached?
+
+      aspect = source.output.blob.open { |file| Media::Probe.call(file.path).aspect }
+      wanted = spec.dig("params", "aspect_ratio")
+      return if aspect == wanted
+
+      raise Higgsfield::RequestError, "o quadro inicial saiu em #{aspect}, mas o vídeo é #{wanted}; o Kling herdaria o aspecto errado"
     end
 
     def media_for(spec)

@@ -118,18 +118,6 @@ class CreativePipelineTest < ActiveJob::TestCase
     assert_match "P4 (prompt de geração) devolveu uma resposta fora do formato esperado", creative.error
   end
 
-  test "receita ainda não disponível falha sem chamar o modelo" do
-    creative = create_creative(@project, "H1")
-    creative.update!(recipe: "kling_reference")
-    fake = use_claude
-
-    PromptCreativeJob.perform_now(creative)
-
-    assert_equal "failed", creative.reload.status
-    assert_match "kling_reference ainda não está disponível", creative.error
-    assert_empty fake.calls
-  end
-
   private
 
   def use_claude(*responses)

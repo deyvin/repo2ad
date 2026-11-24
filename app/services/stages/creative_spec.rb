@@ -95,11 +95,22 @@ module Stages
       when "kling"
         errors << "#{at}/model: kling needs model \"kling4_0\"" unless step["model"] == "kling4_0"
         errors << "#{at}/prompt: kling needs a prompt" if step["prompt"].blank?
+        errors << "#{at}/params/mode: kling needs mode \"image-to-video\"" unless step.dig("params", "mode") == "image-to-video"
         errors.concat(kling_errors(step, at, steps))
+        errors.concat(product_reference_errors(step, at))
       end
       errors.concat(input_errors(step, at, steps.first(index)))
       errors.concat(final_step_errors(step, at)) if step["name"] == "main"
       errors
+    end
+
+    # §6.2: na kling_reference (e na kling_magic) o vídeo leva até 4 referências do produto limpo.
+    def product_reference_errors(step, at)
+      return [] unless @creative.recipe.in?(%w[kling_reference kling_magic])
+
+      count = Array(step.dig("inputs", "image_references")).size
+      max = Recipes::KlingReference::MAX_PRODUCT_REFERENCES
+      count > max ? [ "#{at}/inputs/image_references: at most #{max} product references for this recipe (got #{count})" ] : []
     end
 
     def kling_errors(step, at, steps)

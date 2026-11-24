@@ -1,0 +1,53 @@
+{
+  "recipe": "kling_reference",
+  "on_screen_copy": [],
+  "checks": [
+    "moletom preto de zíper com ANTI FRONT END CLUB no peito esquerdo e logo Mano Deyvin no peito direito",
+    "vídeo em 9:16",
+    "plano contínuo, sem cortes"
+  ],
+  "steps": [
+    {
+      "name": "start_frame",
+      "kind": "nano_banana",
+      "model": "nano_banana_2_1",
+      "prompt": "Vertical 9:16 photo, same scene as the FIRST reference image kept exactly in the center: the black zip hoodie lying crumpled on a glossy white tile floor next to a grey rug, amateur top-down phone photo. Extend the borders above and below (outpaint) with more of the same white tile floor and grey rug, matching light, perspective and grain. Do not change the hoodie, its prints or the original area. No text, no watermarks.",
+      "params": {
+        "aspect_ratio": "9:16",
+        "resolution": "2k",
+        "duration": null,
+        "mode": null,
+        "thinking_level": "high"
+      },
+      "inputs": {
+        "image_references": [
+          "uploads/chao.jpg"
+        ],
+        "start_image": null,
+        "end_image": null
+      },
+      "compose_plan": null
+    },
+    {
+      "name": "main",
+      "kind": "kling",
+      "model": "kling4_0",
+      "prompt": "Viral vertical 9:16 smartphone video, a single continuous handheld shot with a magic-trick twist, TikTok \"nobody is wearing it\" trend.\nSeconds 0-3: top-down phone shot of the black zip hoodie from the references lying flat and crumpled on a glossy white tile floor next to a grey rug, exactly like the first reference photo. Everything is still.\nSeconds 3-5: suddenly the hoodie lifts off the floor by itself and inflates into a 3D shape as if an invisible person is putting it on, the zipper closes by itself, sleeves fill out, the hood pops up, it floats up into a standing pose. Smooth, satisfying, playful, realistic fabric physics.\nSeconds 5-8: in a quick whip-pan blur the camera tilts up and the invisible body becomes a real stylish young Brazilian person in their mid-20s, casual streetwear, wearing that exact hoodie zipped up, in a bright modern apartment with window light. They look straight into the lens, surprised, then grin.\nSeconds 8-10: they spin around to show the back of the hoodie, look back over the shoulder at the camera and point at the chest print with a cheeky wink.\nKeep the hoodie exactly as in the references at all times: black zip hoodie, white \"ANTI FRONT END CLUB\" text on the left chest, white \"Mano Deyvin\" logo on the right chest, same back as the back reference, lettering crisp and never distorted.\nAuthentic UGC phone footage, natural handheld shake, natural light, realistic skin and fabric, fun genuine energy. No on-screen captions, no extra logos.",
+      "params": {
+        "aspect_ratio": "9:16",
+        "resolution": "1080p",
+        "duration": 10,
+        "mode": "image-to-video",
+        "thinking_level": null
+      },
+      "inputs": {
+        "image_references": [
+          "uploads/catalogo.png"
+        ],
+        "start_image": "step:start_frame",
+        "end_image": null
+      },
+      "compose_plan": null
+    }
+  ]
+}

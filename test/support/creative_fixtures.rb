@@ -2,7 +2,7 @@ require "vips"
 require_relative "fake_claude"
 
 # Projeto Cabide pronto para gerar: brief gravado (P1), um ângulo, mídias (galeria.png real e fotos sintéticas)
-# e os criativos I1 (nb_image) e H1 (kling_keyframes) do §12. Sem rede.
+# e os criativos I1 (nb_image), H1 (kling_keyframes) e V3 (kling_reference) do §12. Sem rede.
 module CreativeFixtures
   ANGLE = { "key" => "antes_depois", "name" => "Antes e depois", "hook" => "Tirei no chão do quarto.",
             "support_line" => "Virou foto de loja.", "proof" => "galeria.png", "cta_label" => "Ver no GitHub",
@@ -23,7 +23,9 @@ module CreativeFixtures
       "I1" => { group: "image", recipe: "nb_image", aspect_ratio: "4:5", duration: nil,
                 media: %w[uploads/chao.jpg uploads/catalogo.png] },
       "H1" => { group: "horizontal", recipe: "kling_keyframes", aspect_ratio: "16:9", duration: 10,
-                media: %w[docs/screenshots/galeria.png uploads/chao.jpg uploads/catalogo.png] }
+                media: %w[docs/screenshots/galeria.png uploads/chao.jpg uploads/catalogo.png] },
+      "V3" => { group: "vertical", recipe: "kling_reference", aspect_ratio: "9:16", duration: 10,
+                media: %w[uploads/chao.jpg uploads/catalogo.png] }
     }.fetch(code)
     item = { "code" => code, "group" => attrs[:group], "recipe" => attrs[:recipe], "title" => "#{code} do teste",
              "aspect_ratio" => attrs[:aspect_ratio], "duration_seconds" => attrs[:duration], "angle_key" => "antes_depois",
