@@ -47,7 +47,8 @@ class ReviewCreativeJobTest < ActiveJob::TestCase
     assert_equal fixture("p5_regenerate")["fix_instructions"], @creative.qa["fix_instructions"]
     assert_equal [ 0, "seta menor" ], [ @creative.attempts, @creative.instructions ]
     assert_no_enqueued_jobs only: PromptCreativeJob
-    assert_empty @gateway.calls # nem o BalanceGuard é consultado
+    # Nem o BalanceGuard (saldo) nem geração; só a estimativa do botão da sugestão, que não gasta.
+    assert_empty @gateway.calls.reject { _1.first == :cost }
     assert_equal "done", @project.reload.status
   end
 

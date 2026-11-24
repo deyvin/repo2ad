@@ -6,7 +6,7 @@ module ResultsHelper
     "rendering" => "Gerando na Higgsfield", "reviewing" => "Revisando o resultado"
   }.freeze
   VERDICTS = {
-    "approve" => "Aprovado", "approve_with_notes" => "Aprovado com ressalvas", "regenerate" => "Revisão pediu para refazer"
+    "approve" => "Aprovado", "approve_with_notes" => "Aprovado com ressalvas", "regenerate" => "A revisão sugere gerar de novo"
   }.freeze
   SEVERITIES = { "alta" => "Alta", "media" => "Média", "baixa" => "Baixa" }.freeze
 
@@ -39,6 +39,16 @@ module ResultsHelper
   def creative_status_label(creative) = STATUS_LABELS.fetch(creative.status, creative.status)
 
   def qa_verdict(creative) = creative.qa.is_a?(Hash) ? creative.qa["verdict"] : nil
+
+  # A revisão (P5) só sugere refazer; o usuário aceita pelo diálogo, com a correção já preenchida.
+  def qa_suggests_regeneration?(creative) = creative.finished? && qa_verdict(creative) == "regenerate"
+
+  def qa_fix_instructions(creative) = creative.qa.is_a?(Hash) ? creative.qa["fix_instructions"].to_s : ""
+
+  def accept_suggestion_label(creative)
+    credits = creative_credits(creative)
+    credits ? "Aceitar sugestão e gerar de novo (#{credits_label(credits)})" : "Aceitar sugestão e gerar de novo"
+  end
 
   def results_summary(creatives)
     done = creatives.count { _1.status == "done" }

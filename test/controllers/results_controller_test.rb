@@ -7,6 +7,8 @@ class ResultsControllerTest < ActionDispatch::IntegrationTest
   include MediaFixtures
 
   setup do
+    Higgsfield::Gateway.current = Higgsfield::FakeGateway.new(cost: 2.0)
+    HiggsfieldConnection.current.save_tokens(access_token: "t")
     @project = create_cabide_project
     @project.update_columns(status: "generating")
     @i1 = create_creative(@project, "I1")
@@ -48,6 +50,32 @@ class ResultsControllerTest < ActionDispatch::IntegrationTest
       assert_select "[role=alert]", /conteúdo impróprio/
       assert_select "a", { text: "Baixar", count: 0 }
       assert_select "button", "Gerar de novo"
+    end
+  end
+
+  teardown { Higgsfield::Gateway.current = nil }
+
+  test "revisão que pede para refazer vira sugestão: botão com custo e observação preenchida pela correção" do
+    @i1.update!(qa: JSON.parse(FakeClaude.fixture("p5_regenerate")))
+    fix = @i1.qa["fix_instructions"]
+
+    get project_results_path(@project)
+
+    assert_select "##{dom_id(@i1, :result)}" do
+      assert_select "strong", "A revisão sugere gerar de novo"
+      assert_select "li", /Cabidee/
+      assert_select "button[data-action='dialog#open'][data-dialog-instructions-param=?]", fix, text: "Aceitar sugestão e gerar de novo (≈ 2 créditos)"
+      assert_select "button[data-dialog-instructions-param='']", "Gerar de novo"
+      assert_select "dialog textarea[data-dialog-target='instructions']"
+    end
+  end
+
+  test "aprovado com ressalvas não sugere refazer, só mostra as notas" do
+    get project_results_path(@project)
+
+    assert_select "##{dom_id(@i1, :result)}" do
+      assert_select "strong", "Aprovado com ressalvas"
+      assert_select "button", { text: /Aceitar sugestão/, count: 0 }
     end
   end
 

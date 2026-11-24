@@ -67,7 +67,13 @@
         <%= link_to "Baixar", rails_blob_path(creative.result, disposition: "attachment"),
               class: "bg-ink px-5 py-2.5 font-semibold text-sheet hover:bg-magenta", data: { turbo: false } %>
       <% end %>
-      <button type="button" data-action="dialog#open"
+      <% if qa_suggests_regeneration?(creative) %>
+        <button type="button" data-action="dialog#open" data-dialog-instructions-param="<%= qa_fix_instructions(creative) %>"
+                class="cursor-pointer bg-magenta px-5 py-2.5 font-semibold text-sheet hover:bg-ink">
+          <%= accept_suggestion_label(creative) %>
+        </button>
+      <% end %>
+      <button type="button" data-action="dialog#open" data-dialog-instructions-param=""
               class="cursor-pointer font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta">
         Gerar de novo
       </button>
@@ -78,7 +84,7 @@
           <h3 id="<%= dom_id(creative, :regenerate_title) %>" class="text-xl font-extrabold">Gerar o <%= creative.code %> de novo</h3>
           <p class="mt-2 text-sm text-ink-soft">Gasta créditos da Higgsfield de novo. Diga o que mudar, se quiser.</p>
           <%= form.label :instructions, "O que mudar (opcional)", class: "mt-6 block font-semibold", for: dom_id(creative, :instructions) %>
-          <%= form.text_area :instructions, id: dom_id(creative, :instructions), rows: 4,
+          <%= form.text_area :instructions, id: dom_id(creative, :instructions), rows: 4, data: { dialog_target: "instructions" },
                 placeholder: "Ex.: título maior, sem a seta",
                 class: "mt-2 w-full border-2 border-rule bg-transparent p-3 focus-visible:border-ink focus-visible:outline-none" %>
           <div class="mt-6 flex flex-wrap items-center justify-end gap-4">
