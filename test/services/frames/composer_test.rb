@@ -110,6 +110,24 @@ class Frames::ComposerTest < ActiveSupport::TestCase
     assert_equal 1000, Frames::Crop.top(image, 100).height
   end
 
+  # Casos do QA da T7: screenshots de SaaS com barra lateral, scrollbar e gradiente.
+  { "barra lateral escura" => { sidebar: true },
+    "scrollbar à direita" => { scrollbar: true },
+    "gradiente vertical suave com barra lateral" => { sidebar: true, gradient: true } }.each do |name, options|
+    test "crop_top_pct não parte texto com #{name}" do
+      image = saas_screenshot(**options)
+
+      [ 51.2, 52, 63.3, 30.7 ].each do |pct|
+        height = Frames::Crop.top(image, pct).height
+        last_row = height - 1
+
+        refute text_row?(last_row), "#{pct}%: cortou em #{height}, no meio do texto"
+        refute text_row?(last_row + 1) && text_row?(last_row), "#{pct}%: cortou em #{height}"
+        assert_in_delta 1000 * pct / 100, height, 80, "#{pct}%: corte longe do pedido (#{height})"
+      end
+    end
+  end
+
   test "erros de plano em português" do
     assert_composer_error(/aspecto do canvas inválido/, canvas_aspect: "3:2", background_hex: "#ffffff", layers: [])
     assert_composer_error(/cor de fundo inválida/, canvas_aspect: "1:1", background_hex: "vermelho", layers: [])
@@ -134,6 +152,27 @@ class Frames::ComposerTest < ActiveSupport::TestCase
     path = File.join(@dir, name)
     Vips::Image.black(width, height).new_from_image(rgb).copy(interpretation: :srgb).cast(:uchar).pngsave(path)
     path
+  end
+
+  # Linhas de "texto" de 30 px a cada 40 px (de y = k*40+5 a k*40+34), traços em diagonal como letras.
+  def text_row?(row)
+    (row % 40).between?(5, 34)
+  end
+
+  # Screenshot 1600x1000 de app SaaS: conteúdo claro com texto, barra lateral escura (240 px, #1e222d),
+  # scrollbar à direita com o polegar entre y=200 e y=480, ou fundo em gradiente vertical suave.
+  def saas_screenshot(sidebar: false, scrollbar: false, gradient: false)
+    xyz = Vips::Image.xyz(1600, 1000)
+    x = xyz.extract_band(0)
+    y = xyz.extract_band(1)
+    background = gradient ? (y * (-30.0 / 1000) + 250) : (x * 0 + 255)
+    line = ((y % 40) >= 5) & ((y % 40) <= 34)
+    glyph = ((x + y * 3) % 17) < 6
+    content = (x >= 280) & (x <= 1400)
+    image = (line & glyph & content).ifthenelse(40, background)
+    image = (x < 240).ifthenelse(30, image) if sidebar
+    image = (x >= 1586).ifthenelse(((y >= 200) & (y < 480)).ifthenelse(160, 236), image) if scrollbar
+    image.cast(:uchar).bandjoin([ image.cast(:uchar), image.cast(:uchar) ]).copy(interpretation: :srgb)
   end
 
   # Foto sintética e determinística do "moletom no chão": piso de azulejo branco com rejunte e uma peça escura.
