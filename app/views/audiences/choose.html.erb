@@ -1,0 +1,47 @@
+<% content_for :title, "Público · Repo2Ad" %>
+
+<%= turbo_stream_from @project %>
+
+<p class="text-sm text-ink-soft">Projeto de <%= project_title(@project) %></p>
+<h1 class="mt-2 max-w-[18ch] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Para quem vender?</h1>
+<p class="mt-5 max-w-[56ch] text-lg leading-relaxed text-ink-soft">
+  Escolha um dos públicos que a leitura do repositório sugeriu, ou descreva outro.
+</p>
+
+<%= form_with url: project_audience_path(@project), method: :patch, class: "mt-12 space-y-8" do %>
+  <fieldset class="space-y-4">
+    <legend class="mb-4 text-base font-semibold">Público</legend>
+
+    <% brief_audiences(@project).each do |audience| %>
+      <label class="block min-w-0 cursor-pointer border-2 border-rule bg-sheet p-5 has-[:checked]:border-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-magenta">
+        <span class="flex items-start gap-3">
+          <input type="radio" name="audience_choice" value="<%= audience["key"] %>" class="mt-1.5 size-4 shrink-0 accent-ink">
+          <span class="min-w-0">
+            <span class="block font-semibold wrap-anywhere"><%= audience["name"] %></span>
+            <span class="mt-2 block text-sm text-ink-soft wrap-anywhere"><strong class="text-ink">Dor:</strong> <%= audience["pain"] %></span>
+            <span class="mt-1 block text-sm text-ink-soft wrap-anywhere"><strong class="text-ink">Por que ajuda:</strong> <%= audience["why_fits"] %></span>
+          </span>
+        </span>
+      </label>
+    <% end %>
+
+    <label class="block min-w-0 cursor-pointer border-2 border-rule bg-sheet p-5 has-[:checked]:border-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-3 has-[:focus-visible]:outline-magenta">
+      <span class="flex items-start gap-3">
+        <input type="radio" name="audience_choice" value="outro" class="mt-1.5 size-4 shrink-0 accent-ink">
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">Outro público</span>
+          <span class="mt-2 block text-sm text-ink-soft">Descreva em uma frase quem compraria este produto.</span>
+          <textarea name="custom_audience" rows="3" class="mt-3 w-full border-b-2 border-ink bg-transparent py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-magenta" aria-label="Descrição do outro público"></textarea>
+        </span>
+      </span>
+    </label>
+  </fieldset>
+
+  <% if @error %>
+    <p role="alert" class="text-sm font-semibold text-magenta"><%= @error %></p>
+  <% end %>
+
+  <div class="flex flex-wrap items-center gap-4">
+    <%= submit_tag "Continuar", class: "cursor-pointer bg-ink px-6 py-3 font-semibold text-sheet hover:bg-magenta" %>
+  </div>
+<% end %>

@@ -58,7 +58,7 @@ class Project < ApplicationRecord
 
   def analysis_changed?
     saved_change_to_status? || saved_change_to_owner? || saved_change_to_name? ||
-      saved_change_to_commit_sha? || saved_change_to_ignored_uploads?
+      saved_change_to_commit_sha? || saved_change_to_ignored_uploads? || saved_change_to_angles?
   end
 
   def broadcast_analysis
@@ -66,5 +66,7 @@ class Project < ApplicationRecord
                                partial: "projects/title", locals: { project: self }
     broadcast_replace_to self, target: ActionView::RecordIdentifier.dom_id(self, :timeline),
                                partial: "projects/timeline", locals: { project: self }
+    broadcast_replace_to self, target: ActionView::RecordIdentifier.dom_id(self, :angles),
+                               partial: "projects/angles", locals: { project: self }
   end
 end

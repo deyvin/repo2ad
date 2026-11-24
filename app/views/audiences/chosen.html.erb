@@ -1,0 +1,8 @@
+<% content_for :title, "Público · Repo2Ad" %>
+
+<%= turbo_stream_from @project %>
+
+<p class="text-sm text-ink-soft">Projeto de <%= project_title(@project) %></p>
+<h1 class="mt-2 max-w-full wrap-anywhere text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Público: <%= audience_name(@project) %></h1>
+
+<%= render "projects/angles", project: @project %>

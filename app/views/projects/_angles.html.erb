@@ -1,0 +1,30 @@
+<div id="<%= dom_id(project, :angles) %>" class="mt-12 min-w-0">
+  <% if project.status == "failed" %>
+    <div role="alert" class="min-w-0 border-l-4 border-magenta bg-proof px-4 py-3">
+      <p class="font-semibold">Não consegui gerar os ângulos.</p>
+      <p class="mt-1 wrap-anywhere text-sm"><%= capitalized_sentences(project.error) %></p>
+    </div>
+    <%= link_to "Tentar com outra URL", new_project_path,
+          class: "mt-6 inline-block font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>
+  <% elsif angle_list(project).any? %>
+    <p class="text-lg text-ink-soft wrap-anywhere"><%= project.angles["audience_summary"] %></p>
+    <ol class="mt-8 space-y-6" aria-label="Ângulos de mensagem">
+      <% angle_list(project).each do |angle| %>
+        <li class="min-w-0 border-2 border-rule bg-sheet p-5">
+          <p class="flex flex-wrap items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-soft">
+            <span class="wrap-anywhere"><%= angle["name"] %></span>
+            <% if angle["primary"] %>
+              <span class="bg-magenta px-2 py-0.5 text-sheet">Principal</span>
+            <% end %>
+          </p>
+          <p class="mt-3 text-xl font-semibold wrap-anywhere"><%= angle["hook"] %></p>
+          <p class="mt-2 text-ink-soft wrap-anywhere"><%= angle["support_line"] %></p>
+          <p class="mt-3 text-sm wrap-anywhere"><strong>Prova:</strong> <%= angle["proof"] %></p>
+          <p class="mt-1 text-sm wrap-anywhere"><strong>CTA:</strong> <%= angle["cta_label"] %></p>
+        </li>
+      <% end %>
+    </ol>
+  <% elsif project.status == "planning" %>
+    <p class="text-lg font-semibold">Gerando ângulos de mensagem…</p>
+  <% end %>
+</div>

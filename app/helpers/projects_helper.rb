@@ -49,4 +49,18 @@ module ProjectsHelper
   def capitalized_sentences(text)
     text.to_s.split(/(?<=[.!?])\s+/).map(&:upcase_first).join(" ")
   end
+
+  def brief_audiences(project)
+    Array(project.brief.is_a?(Hash) ? project.brief["audiences"] : nil)
+  end
+
+  def audience_name(project)
+    audience = project.audience.is_a?(Hash) ? project.audience : {}
+    audience["name"].presence || "Outro público"
+  end
+
+  # Ângulos prontos: o P2 grava { "audience_summary", "angles" }.
+  def angle_list(project)
+    Array(project.angles.is_a?(Hash) ? project.angles["angles"] : nil)
+  end
 end

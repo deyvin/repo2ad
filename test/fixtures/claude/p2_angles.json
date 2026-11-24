@@ -1,0 +1,41 @@
+{
+  "audience_summary": "Donos de brechó e pequenas lojas que fotografam as peças em casa e precisam de catálogo e vídeo no mesmo dia.",
+  "angles": [
+    {
+      "key": "chao_para_catalogo",
+      "name": "Foto do chão vira catálogo",
+      "hook": "Tirou no chão? Vira foto de loja.",
+      "support_line": "Sem estúdio e sem modelo: a foto que você já tira vira catálogo em fundo branco.",
+      "proof": "Antes e depois de uma peça fotografada no chão (galeria e adicionar peça).",
+      "cta_label": "Ver no GitHub",
+      "primary": true
+    },
+    {
+      "key": "um_video_por_peca",
+      "name": "Um vídeo por peça",
+      "hook": "Uma peça, um vídeo de quem veste.",
+      "support_line": "Vídeo vertical de 5 s ou 10 s com o look escolhido.",
+      "proof": "Vídeos de 5 s ou 10 s em formato vertical (seção de vídeos do README).",
+      "cta_label": "Rode no seu computador com Docker",
+      "primary": false
+    },
+    {
+      "key": "lote_do_dia",
+      "name": "Lote novo, mesmo dia",
+      "hook": "Lote novo hoje? Fotos e vídeo no mesmo dia.",
+      "support_line": "Fotos de catálogo e vídeos para Reels ou Stories sem sair do computador.",
+      "proof": "Galeria com as fotos e os vídeos gerados, selecionados para o look.",
+      "cta_label": "Conheça o código aberto",
+      "primary": false
+    },
+    {
+      "key": "corrige_com_observacao",
+      "name": "Corrige com uma observação",
+      "hook": "Errou a estampa? Gere de novo com uma observação.",
+      "support_line": "A tela Gerar de novo aceita uma observação para corrigir o resultado.",
+      "proof": "Tela Gerar de novo com o campo de observação (screenshot gerar-de-novo).",
+      "cta_label": "Ver no GitHub",
+      "primary": false
+    }
+  ]
+}
