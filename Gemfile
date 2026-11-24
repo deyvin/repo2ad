@@ -31,6 +31,11 @@ gem "solid_cable"
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
+# Cliente MCP oficial + OAuth para a Higgsfield (decisão 006)
+gem "mcp", "~> 1.10"
+gem "faraday"             # transporte HTTP do cliente MCP
+gem "event_stream_parser" # respostas SSE do servidor MCP
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 

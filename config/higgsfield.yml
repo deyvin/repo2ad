@@ -1,0 +1,6 @@
+# Higgsfield via MCP (decisão 006). O login é feito no app, em "Conectar Higgsfield".
+shared:
+  mcp:
+    url: <%= ENV["HF_MCP_URL"].presence || "https://mcp.higgsfield.ai/mcp" %>
+    # O compose passa o padrão com a porta do host; fora do Docker vale a PORT local.
+    redirect_uri: <%= ENV["HF_MCP_REDIRECT_URI"].presence || "http://localhost:#{ENV.fetch("PORT", 3001)}/higgsfield/callback" %>

@@ -1,0 +1,17 @@
+<% if HiggsfieldConnection.current.connected? %>
+  <div class="flex items-center gap-3 text-sm text-ink-soft">
+    <span class="flex items-center gap-2">
+      <span class="size-2 rounded-full bg-magenta" aria-hidden="true"></span>
+      Higgsfield:
+      <%= turbo_frame_tag "balance", src: balance_path, loading: :lazy do %>
+        <span>…</span>
+      <% end %>
+    </span>
+    <%= button_to "Desconectar", higgsfield_connection_path, method: :delete,
+          form: { data: { turbo_confirm: "Desconectar a Higgsfield?" } },
+          class: "cursor-pointer underline underline-offset-4 hover:text-ink" %>
+  </div>
+<% else %>
+  <%= link_to "Conectar Higgsfield", connect_higgsfield_path, data: { turbo: false },
+        class: "text-sm font-semibold underline decoration-magenta decoration-2 underline-offset-4 hover:text-magenta" %>
+<% end %>

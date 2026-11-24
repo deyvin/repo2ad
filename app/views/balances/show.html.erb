@@ -1,0 +1,9 @@
+<%= turbo_frame_tag "balance" do %>
+  <% if @balance && @balance["credits"] %>
+    <span class="font-semibold text-ink" title="Plano <%= @balance["subscription_plan_type"] %>">
+      <%= number_with_delimiter(@balance["credits"].to_f.round(1), delimiter: ".", separator: ",") %> créditos
+    </span>
+  <% else %>
+    <span>saldo indisponível</span>
+  <% end %>
+<% end %>

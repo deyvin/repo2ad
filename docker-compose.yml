@@ -4,10 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3001}:3000"
     env_file:
       - path: .env
         required: false
+    environment:
+      # Retorno do OAuth da Higgsfield na porta do host (o PORT do host não existe dentro do container).
+      HF_MCP_REDIRECT_URI: ${HF_MCP_REDIRECT_URI:-http://localhost:${PORT:-3001}/higgsfield/callback}
     volumes:
       - .:/rails
       - bundle:/usr/local/bundle

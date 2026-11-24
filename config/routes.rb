@@ -5,5 +5,12 @@ Rails.application.routes.draw do
 
   resources :projects, only: :new
 
+  scope :higgsfield, controller: :higgsfield_connections do
+    get :connect, action: :new, as: :connect_higgsfield
+    get :callback, as: :higgsfield_callback
+    delete :connection, action: :destroy, as: :higgsfield_connection
+  end
+  resource :balance, only: :show
+
   root "projects#new"
 end

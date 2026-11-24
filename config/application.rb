@@ -36,6 +36,11 @@ module Repo2ad
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Chaves do Active Record Encryption (protegem os tokens OAuth da Higgsfield) vêm do .env.
+    config.active_record.encryption.primary_key = ENV["AR_ENCRYPTION_PRIMARY_KEY"]
+    config.active_record.encryption.deterministic_key = ENV["AR_ENCRYPTION_DETERMINISTIC_KEY"]
+    config.active_record.encryption.key_derivation_salt = ENV["AR_ENCRYPTION_KEY_DERIVATION_SALT"]
+
     # Don't generate system test files.
     config.generators.system_tests = nil
   end
