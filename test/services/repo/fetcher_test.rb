@@ -111,6 +111,84 @@ module Repo
       end
     end
 
+    test "repositório renomeado: o full_name atual vale para o resultado" do
+      api = FakeGithubApi.new(repository: { "full_name" => "deyvin/cabide-novo" })
+
+      result = Fetcher.call(CABIDE_URL, project_id: 9, api: api, base_dir: @dir)
+
+      assert_equal [ "deyvin", "cabide-novo" ], [ result.owner, result.name ]
+    end
+
+    test "passar do teto de arquivos aborta e apaga a pasta" do
+      path = build_tarball("muitos.tar.gz") do |tar|
+        tar.mkdir("root", 0o755)
+        6.times { |i| tar.add_file_simple("root/f#{i}.txt", 0o644, 0) { |io| io.write("") } }
+      end
+
+      error = assert_raises(Repo::Error) do
+        Fetcher.call(CABIDE_URL, project_id: 10, api: FakeGithubApi.new(tarball: path), base_dir: @dir, max_entries: 5)
+      end
+
+      assert_match "arquivos demais", error.message
+      refute File.exist?(File.join(@dir, "10"))
+    end
+
+    test "o teto padrão de 20 mil entradas é aplicado" do
+      path = build_tarball("cheio.tar.gz") do |tar|
+        tar.mkdir("root", 0o755)
+        Repo::Fetcher::MAX_ENTRIES.times { |i| tar.add_file_simple("root/f#{i}", 0o644, 0) { |io| io.write("") } }
+      end
+
+      error = assert_raises(Repo::Error) do
+        Fetcher.call(CABIDE_URL, project_id: 13, api: FakeGithubApi.new(tarball: path), base_dir: @dir)
+      end
+
+      assert_match "20000", error.message
+    end
+
+    test "pastas aninhadas além do teto de profundidade abortam" do
+      path = build_tarball("fundo.tar.gz") do |tar|
+        tar.add_file_simple("root/#{Array.new(3, 'd').join('/')}/f.txt", 0o644, 1) { |io| io.write("x") }
+      end
+
+      error = assert_raises(Repo::Error) do
+        Fetcher.call(CABIDE_URL, project_id: 14, api: FakeGithubApi.new(tarball: path), base_dir: @dir, max_depth: 3)
+      end
+
+      assert_match "pastas aninhadas demais", error.message
+      refute File.exist?(File.join(@dir, "14"))
+    end
+
+    test "conflito de caminho (arquivo 'a' e depois pasta 'a/') vira Repo::Error em português" do
+      path = build_tarball("conflito.tar.gz") do |tar|
+        tar.mkdir("root", 0o755)
+        tar.add_file_simple("root/a", 0o644, 1) { |io| io.write("x") }
+        tar.add_file_simple("root/a/b.txt", 0o644, 1) { |io| io.write("y") }
+      end
+
+      error = assert_raises(Repo::Error) do
+        Fetcher.call(CABIDE_URL, project_id: 11, api: FakeGithubApi.new(tarball: path), base_dir: @dir)
+      end
+
+      assert_match "conflitantes", error.message
+      refute File.exist?(File.join(@dir, "11"))
+    end
+
+    test "falha no meio da extração apaga a pasta inteira, não só o arquivo que estourou" do
+      path = build_tarball("meio.tar.gz") do |tar|
+        tar.mkdir("root", 0o755)
+        tar.add_file_simple("root/ok.txt", 0o644, 2) { |io| io.write("ok") }
+        tar.add_file_simple("root/grande.txt", 0o644, 10) { |io| io.write("0123456789") }
+      end
+
+      assert_raises(Repo::Error) do
+        Fetcher.call(CABIDE_URL, project_id: 12, api: FakeGithubApi.new(tarball: path), base_dir: @dir,
+                                 max_extracted_bytes: 5)
+      end
+
+      refute File.exist?(File.join(@dir, "12"))
+    end
+
     private
 
     def build_tarball(name)

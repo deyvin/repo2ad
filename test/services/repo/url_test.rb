@@ -24,6 +24,11 @@ module Repo
       assert_equal [ "deyvin", "cabide", nil ], parts("git@github.com:deyvin/cabide")
     end
 
+    test "o host não diferencia maiúsculas" do
+      assert_equal [ "deyvin", "cabide", nil ], parts("https://GITHUB.com/deyvin/cabide")
+      assert_equal [ "deyvin", "cabide", nil ], parts("git@GitHub.com:deyvin/cabide.git")
+    end
+
     test "to_s devolve owner/name" do
       assert_equal "deyvin/cabide", Url.new("https://github.com/deyvin/cabide.git").to_s
     end

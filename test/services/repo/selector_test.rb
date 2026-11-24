@@ -93,6 +93,18 @@ module Repo
       assert_equal [ "docs/b.png", "a.png", "docs/c.png" ], paths
     end
 
+    test "README e manifestos sem maiúsculas (readme.md, gemfile) entram, e o README mantém a prioridade" do
+      FileUtils.mkdir_p(File.join(@root, "shots"))
+      make_image(File.join(@root, "shots"), "ref_a.png", size: "300x300")
+      write "readme.md", "![a](shots/ref_a.png)"
+      write "gemfile", "gem 'rails'"
+
+      result = Selector.call(@root)
+
+      assert_equal [ "readme.md", "gemfile" ], result.text_files
+      assert_equal "shots/ref_a.png", result.images.first.path
+    end
+
     private
 
     def write(rel, content)

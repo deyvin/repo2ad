@@ -1,10 +1,11 @@
 module Repo
   # Lê a URL colada pelo usuário e devolve owner, name e, se houver, o branch. Só aceita o GitHub.
+  # O host não diferencia maiúsculas (https://GITHUB.com/o/r é aceito).
   class Url
     MESSAGE = "informe a URL pública de um repositório do GitHub, ex.: https://github.com/dono/repo".freeze
 
-    HTTPS = %r{\Ahttps://(?:www\.)?github\.com/(?<owner>[^/\s]+)/(?<name>[^/\s]+?)(?:\.git)?(?:/tree/(?<branch>\S+?))?/*\z}
-    SSH = %r{\Agit@github\.com:(?<owner>[^/\s]+)/(?<name>[^/\s]+?)(?:\.git)?\z}
+    HTTPS = %r{\Ahttps://(?:www\.)?github\.com/(?<owner>[^/\s]+)/(?<name>[^/\s]+?)(?:\.git)?(?:/tree/(?<branch>\S+?))?/*\z}i
+    SSH = %r{\Agit@github\.com:(?<owner>[^/\s]+)/(?<name>[^/\s]+?)(?:\.git)?\z}i
     OWNER = /\A[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\z/
     NAME = /\A[A-Za-z0-9_.-]{1,100}\z/
 

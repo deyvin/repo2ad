@@ -13,10 +13,20 @@ module Repo
 
     # Arquivos regulares que casam com algum padrão (relativo à raiz), ordenados, sem os excluídos.
     def candidates(root, patterns)
-      patterns.flat_map { |pattern| Dir.glob(pattern, base: root) }
+      patterns.flat_map { |pattern| matches(root, pattern) }
               .uniq
               .sort
               .select { |rel| file?(root, rel) }
+    end
+
+    # Padrão sem barra (README*, Gemfile, LICENSE*) vale só para a raiz e não diferencia maiúsculas:
+    # readme.md, Readme.md e README.md casam. Padrão com pasta usa o glob normal.
+    def matches(root, pattern)
+      if pattern.include?("/")
+        Dir.glob(pattern, base: root)
+      else
+        Dir.children(root).select { |name| File.fnmatch?(pattern, name, File::FNM_CASEFOLD) }
+      end
     end
 
     def file?(root, rel)

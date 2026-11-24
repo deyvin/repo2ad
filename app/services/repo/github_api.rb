@@ -39,11 +39,33 @@ module Repo
     private
 
     def get_json(path, not_found:)
-      response = request(URI("https://#{HOST}#{path}"), auth: true, accept: "application/vnd.github+json")
+      get_json_from(URI("https://#{HOST}#{path}"), not_found: not_found)
+    end
+
+    # Repositório renomeado responde 3xx apontando para a API nova. Só seguimos para api.github.com, até
+    # MAX_REDIRECTS vezes; o token vai junto porque é o mesmo host.
+    def get_json_from(uri, not_found:, redirects_left: MAX_REDIRECTS)
+      response = request(uri, auth: true, accept: "application/vnd.github+json")
+      if response.is_a?(Net::HTTPRedirection)
+        raise Error, "redirecionamentos demais ao consultar o GitHub" if redirects_left.zero?
+
+        return get_json_from(api_redirect_uri(response["location"]), not_found: not_found,
+                                                                     redirects_left: redirects_left - 1)
+      end
+
       check_status!(response, not_found: not_found)
       JSON.parse(response.body.to_s)
     rescue JSON::ParserError
       raise Error, "resposta inesperada do GitHub"
+    end
+
+    def api_redirect_uri(location)
+      uri = URI.parse(location)
+      raise Error, "redirecionamento inesperado do GitHub" unless uri.scheme == "https" && uri.host == HOST
+
+      uri
+    rescue URI::InvalidURIError
+      raise Error, "redirecionamento inesperado do GitHub"
     end
 
     # Abre a conexão TLS com o host. Os testes trocam este método por um Net::HTTP de mentira.

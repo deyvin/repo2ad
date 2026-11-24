@@ -200,6 +200,42 @@ module Repo
       assert_match "limite", error.message
     end
 
+    test "repositório renomeado: segue o 301 para api.github.com com o token" do
+      moved = response(Net::HTTPMovedPermanently, "301", "", "location" => "https://api.github.com/repositories/42")
+      http = FakeNetHttp.new(moved, ok_response('{"default_branch":"main"}'))
+
+      data = ScriptedGithubApi.new(http, token: "segredo").repository(owner: "o", name: "antigo")
+
+      assert_equal "main", data["default_branch"]
+      assert_equal "Bearer segredo", http.requests[1]["Authorization"]
+    end
+
+    test "301 para fora de api.github.com é recusado" do
+      moved = response(Net::HTTPMovedPermanently, "301", "", "location" => "https://evil.example/x")
+      http = FakeNetHttp.new(moved)
+
+      error = assert_raises(Repo::Error) do
+        ScriptedGithubApi.new(http, token: "segredo").repository(owner: "o", name: "r")
+      end
+
+      assert_match "redirecionamento inesperado", error.message
+      assert_equal 1, http.requests.size
+    end
+
+    test "301 em loop para no limite de 3 redirecionamentos" do
+      loop_responses = Array.new(4) do
+        response(Net::HTTPMovedPermanently, "301", "", "location" => "https://api.github.com/repositories/42")
+      end
+      http = FakeNetHttp.new(*loop_responses)
+
+      error = assert_raises(Repo::Error) do
+        ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+      end
+
+      assert_match "redirecionamentos demais", error.message
+      assert_equal 4, http.requests.size
+    end
+
     private
 
     def response(klass, code, body, headers = {})
