@@ -1,5 +1,7 @@
 # 001: Higgsfield CLI dentro do container (spike S1)
 
+> **Substituída pela decisão 006** (Higgsfield via MCP com OAuth). Os custos medidos e o formato dos jobs continuam valendo como referência.
+
 Data: 2026-11-24. Decisões afetadas: D1 e D2 (confirmadas).
 
 ## O que foi testado
