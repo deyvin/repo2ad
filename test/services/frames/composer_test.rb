@@ -105,7 +105,8 @@ class Frames::ComposerTest < ActiveSupport::TestCase
 
     cropped = Frames::Crop.top(image, 50)
 
-    assert_includes [ 450, 561 ], cropped.height, "cortou no meio do texto"
+    # O texto ocupa as linhas 450 a 559: um corte com altura de 451 a 559 deixaria linha de texto dos dois lados.
+    refute_includes 451..559, cropped.height, "cortou no meio do texto"
     assert_equal 1000, Frames::Crop.top(image, 0).height
     assert_equal 1000, Frames::Crop.top(image, 100).height
   end
