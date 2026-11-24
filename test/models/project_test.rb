@@ -82,4 +82,44 @@ class ProjectTest < ActiveSupport::TestCase
     refute project.valid?
     assert project.errors.of_kind?(:error, :blank)
   end
+
+  test "update! não pula o fluxo: draft não vai direto para done" do
+    project = Project.create!
+
+    assert_raises(ActiveRecord::RecordInvalid) { project.update!(status: "done") }
+    assert_equal "draft", project.reload.status
+  end
+
+  test "update! não tira um projeto de failed" do
+    project = Project.create!(status: "failed", error: "x")
+
+    assert_raises(ActiveRecord::RecordInvalid) { project.update!(status: "ingesting", error: nil) }
+
+    project.reload
+    assert_equal "failed", project.status
+    assert_equal "x", project.error
+  end
+
+  test "update! aceita transições do fluxo e failed com error" do
+    project = Project.create!
+    project.update!(status: "ingesting")
+    project.update!(status: "failed", error: "boom")
+
+    assert_equal "failed", project.reload.status
+    assert_equal "boom", project.error
+  end
+
+  test "criação pode começar em qualquer status válido" do
+    assert Project.create!(status: "done").persisted?
+  end
+
+  test "transition_to! aceita símbolo" do
+    project = Project.create!
+
+    project.transition_to!(:ingesting)
+    assert_equal "ingesting", project.reload.status
+
+    project.transition_to!(:failed, error: "x")
+    assert_equal "failed", project.reload.status
+  end
 end

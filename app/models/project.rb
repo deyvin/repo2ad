@@ -23,17 +23,34 @@ class Project < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
   validates :error, presence: true, if: -> { status == "failed" }
+  # Vale para qualquer update!(status:), não só para transition_to!. A criação fica livre.
+  validate :status_follows_flow, on: :update, if: :will_save_change_to_status?
+
+  def self.transition_allowed?(from, to)
+    from = from.to_s
+    to = to.to_s
+    return from != "failed" if to == "failed"
+
+    NEXT_STATUSES.fetch(from, []).include?(to)
+  end
 
   def can_transition_to?(new_status)
-    return status != "failed" if new_status == "failed"
-
-    NEXT_STATUSES.fetch(status, []).include?(new_status)
+    self.class.transition_allowed?(status, new_status)
   end
 
   def transition_to!(new_status, error: nil)
+    new_status = new_status.to_s
     raise InvalidTransition, "transição inválida: #{status} -> #{new_status}" unless can_transition_to?(new_status)
     raise ArgumentError, "error é obrigatório ao marcar como failed" if new_status == "failed" && error.blank?
 
     update!(status: new_status, error: new_status == "failed" ? error : nil)
+  end
+
+  private
+
+  def status_follows_flow
+    return if self.class.transition_allowed?(status_in_database, status)
+
+    errors.add(:status, "não pode passar de #{status_in_database} para #{status}")
   end
 end
