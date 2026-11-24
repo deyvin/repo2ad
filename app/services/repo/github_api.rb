@@ -12,8 +12,11 @@ module Repo
     REDIRECT_HOSTS = %w[codeload.github.com github.com objects.githubusercontent.com].freeze
     MAX_REDIRECTS = 3
     TIMEOUT_SECONDS = 20
+    # Espera máxima que o GitHub pode pedir. Acima disso, o retry usa o backoff do job.
+    MAX_RETRY_AFTER = 15 * 60
     NOT_FOUND = "repositório não encontrado; só repositórios públicos são aceitos".freeze
     UNREACHABLE = "não consegui falar com o GitHub agora; tente de novo".freeze
+    RATE_LIMITED = "limite de requisições do GitHub atingido; configure GITHUB_TOKEN".freeze
 
     def initialize(token: ENV["GITHUB_TOKEN"].presence)
       @token = token
@@ -54,7 +57,7 @@ module Repo
         http.request(build_request(uri, auth: auth, accept: accept))
       end
     rescue SocketError, SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError
-      raise Error, UNREACHABLE
+      raise TransientError, UNREACHABLE
     end
 
     def download(uri, destination:, max_bytes:, auth:, redirects_left:)
@@ -76,7 +79,7 @@ module Repo
       download(redirect_uri(location), destination: destination, max_bytes: max_bytes,
                                        auth: false, redirects_left: redirects_left - 1)
     rescue SocketError, SystemCallError, Timeout::Error, OpenSSL::SSL::SSLError
-      raise Error, UNREACHABLE
+      raise TransientError, UNREACHABLE
     end
 
     def build_request(uri, auth:, accept: nil)
@@ -122,13 +125,25 @@ module Repo
       when 401 then raise Error, "token do GITHUB_TOKEN recusado pelo GitHub"
       when 403, 429
         if code == 429 || response["x-ratelimit-remaining"] == "0"
-          raise Error, "limite de requisições do GitHub atingido; configure GITHUB_TOKEN e tente de novo"
+          raise TransientError.new(RATE_LIMITED, retry_after: retry_after(response))
         end
 
         raise Error, "o GitHub recusou o acesso (HTTP #{code})"
       when 404 then raise Error, not_found
+      when 500..599 then raise TransientError, "o GitHub respondeu HTTP #{code}"
       else raise Error, "erro ao consultar o GitHub (HTTP #{code})"
       end
+    end
+
+    # Segundos até poder tentar de novo: Retry-After, ou X-RateLimit-Reset (epoch). Nil se não vier ou for longo demais.
+    def retry_after(response)
+      seconds =
+        if response["retry-after"].to_s.match?(/\A\d+\z/)
+          response["retry-after"].to_i
+        elsif response["x-ratelimit-reset"].to_s.match?(/\A\d+\z/)
+          response["x-ratelimit-reset"].to_i - Time.now.to_i
+        end
+      seconds if seconds&.positive? && seconds <= MAX_RETRY_AFTER
     end
   end
 end

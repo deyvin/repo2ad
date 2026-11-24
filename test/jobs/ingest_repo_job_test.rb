@@ -2,7 +2,20 @@ require "test_helper"
 require "tmpdir"
 require_relative "../support/fake_github_api"
 
+# API de mentira que falha ao consultar o repositório com o erro dado. Sem rede.
+class FailingGithubApi
+  def initialize(error)
+    @error = error
+  end
+
+  def repository(**)
+    raise @error
+  end
+end
+
 class IngestRepoJobTest < ActiveJob::TestCase
+  CABIDE_URL = "https://github.com/deyvin/cabide".freeze
+
   setup do
     @dir = Dir.mktmpdir("ingest-test")
     @original_api = IngestRepoJob.api_factory
@@ -18,7 +31,7 @@ class IngestRepoJobTest < ActiveJob::TestCase
 
   test "com o Cabide: cria os media_inputs com imagem anexada e enfileira o P1" do
     IngestRepoJob.api_factory = -> { FakeGithubApi.new }
-    project = Project.create!(repo_url: "https://github.com/deyvin/cabide")
+    project = Project.create!(repo_url: CABIDE_URL)
 
     assert_enqueued_with(job: AnalyzeProductJob, args: [ project.id ]) do
       IngestRepoJob.perform_now(project.id)
@@ -52,7 +65,7 @@ class IngestRepoJobTest < ActiveJob::TestCase
     path = File.join(@dir, "lixo.tar.gz")
     File.write(path, "não é gzip")
     IngestRepoJob.api_factory = -> { FakeGithubApi.new(tarball: path) }
-    project = Project.create!(repo_url: "https://github.com/deyvin/cabide")
+    project = Project.create!(repo_url: CABIDE_URL)
 
     assert_no_enqueued_jobs do
       IngestRepoJob.perform_now(project.id)
@@ -66,12 +79,92 @@ class IngestRepoJobTest < ActiveJob::TestCase
 
   test "erro inesperado marca failed com mensagem genérica e relança" do
     IngestRepoJob.api_factory = -> { raise "boom" }
-    project = Project.create!(repo_url: "https://github.com/deyvin/cabide")
+    project = Project.create!(repo_url: CABIDE_URL)
 
     assert_raises(RuntimeError) { IngestRepoJob.perform_now(project.id) }
 
     project.reload
     assert_equal "failed", project.status
     assert_equal "erro inesperado ao ingerir o repositório", project.error
+  end
+
+  test "erro transitório reagenda o job e mantém o projeto em ingesting" do
+    IngestRepoJob.api_factory = -> { FailingGithubApi.new(Repo::TransientError.new("rede")) }
+    project = Project.create!(repo_url: CABIDE_URL)
+
+    assert_enqueued_with(job: IngestRepoJob, args: [ project.id ]) do
+      IngestRepoJob.perform_now(project.id)
+    end
+
+    project.reload
+    assert_equal "ingesting", project.status
+    assert_empty project.media_inputs
+  end
+
+  test "Retry-After do GitHub vira o tempo de espera do reagendamento" do
+    IngestRepoJob.api_factory = -> { FailingGithubApi.new(Repo::TransientError.new("limite", retry_after: 120)) }
+    project = Project.create!(repo_url: CABIDE_URL)
+    before = Time.now.to_f
+
+    IngestRepoJob.perform_now(project.id)
+
+    scheduled = enqueued_jobs.last
+    assert_equal IngestRepoJob.name, scheduled[:job].name
+    assert_in_delta before + 120, scheduled[:at], 5
+  end
+
+  test "esgotadas as tentativas, vai para failed com a mensagem para o usuário" do
+    IngestRepoJob.api_factory = -> { FailingGithubApi.new(Repo::TransientError.new("rede")) }
+    project = Project.create!(repo_url: CABIDE_URL)
+    job = IngestRepoJob.new(project.id)
+
+    # Cada perform_now é uma tentativa do mesmo job; a última esgota o retry_on.
+    IngestRepoJob::RETRY_ATTEMPTS.times { job.perform_now }
+
+    project.reload
+    assert_equal "failed", project.status
+    assert_equal "O GitHub não respondeu. Tente de novo em alguns minutos.", project.error
+  end
+
+  test "Retry-After não passa do limite de tentativas" do
+    IngestRepoJob.api_factory = -> { FailingGithubApi.new(Repo::TransientError.new("limite", retry_after: 60)) }
+    project = Project.create!(repo_url: CABIDE_URL)
+    job = IngestRepoJob.new(project.id)
+
+    (IngestRepoJob::RETRY_ATTEMPTS - 1).times { job.perform_now }
+    assert_equal "ingesting", project.reload.status
+
+    job.perform_now
+
+    assert_equal "failed", project.reload.status
+  end
+
+  test "404 ou repositório privado não é transitório: failed direto, sem reagendar" do
+    IngestRepoJob.api_factory = -> { FailingGithubApi.new(Repo::Error.new("repositório não encontrado")) }
+    project = Project.create!(repo_url: CABIDE_URL)
+
+    assert_no_enqueued_jobs { IngestRepoJob.perform_now(project.id) }
+
+    project.reload
+    assert_equal "failed", project.status
+    assert_match "não encontrado", project.error
+  end
+
+  test "nova tentativa apaga o que a anterior deixou e não duplica mídia" do
+    project = Project.create!(repo_url: CABIDE_URL, status: "ingesting")
+    project.media_inputs.create!(source: "repo", path: "docs/screenshots/galeria.png", width: 1, height: 1)
+    leftover = File.join(@dir, project.id.to_s, "lixo")
+    FileUtils.mkdir_p(leftover)
+    File.write(File.join(leftover, "velho.txt"), "resto")
+    IngestRepoJob.api_factory = -> { FakeGithubApi.new }
+
+    IngestRepoJob.perform_now(project.id)
+
+    project.reload
+    assert_equal "analyzing", project.status
+    paths = project.media_inputs.pluck(:path)
+    assert_equal paths.uniq, paths
+    assert(project.media_inputs.all? { |m| m.width != 1 })
+    refute File.exist?(leftover)
   end
 end

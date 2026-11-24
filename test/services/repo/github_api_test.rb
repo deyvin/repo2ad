@@ -4,6 +4,7 @@ require "net/http"
 
 module Repo
   # Net::HTTP de mentira: a resposta vem de uma fila e cada requisição fica registrada. Sem rede.
+  # Se o item da fila for uma exceção, ela é levantada no lugar da resposta.
   class FakeNetHttp
     attr_reader :requests
 
@@ -15,6 +16,8 @@ module Repo
     def request(req, &block)
       @requests << req
       response = @responses.shift
+      raise response if response.is_a?(Exception)
+
       block ? block.call(response) : response
     end
   end
@@ -59,7 +62,7 @@ module Repo
       assert_nil http.requests.first["Authorization"]
     end
 
-    test "404 vira mensagem clara" do
+    test "404 vira mensagem clara e não é transitório" do
       http = FakeNetHttp.new(response(Net::HTTPNotFound, "404", "{}"))
 
       error = assert_raises(Repo::Error) do
@@ -67,16 +70,79 @@ module Repo
       end
 
       assert_match "não encontrado", error.message
+      refute_kind_of Repo::TransientError, error
     end
 
-    test "limite de requisições vira mensagem com GITHUB_TOKEN" do
+    test "limite de requisições é transitório e menciona GITHUB_TOKEN" do
       http = FakeNetHttp.new(response(Net::HTTPForbidden, "403", "{}", "x-ratelimit-remaining" => "0"))
 
-      error = assert_raises(Repo::Error) do
+      error = assert_raises(Repo::TransientError) do
         ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
       end
 
       assert_match "GITHUB_TOKEN", error.message
+      assert_nil error.retry_after
+    end
+
+    test "429 com Retry-After devolve o tempo de espera" do
+      http = FakeNetHttp.new(response(Net::HTTPTooManyRequests, "429", "{}", "retry-after" => "30"))
+
+      error = assert_raises(Repo::TransientError) do
+        ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+      end
+
+      assert_equal 30, error.retry_after
+    end
+
+    test "rate limit com X-RateLimit-Reset calcula a espera até o reset" do
+      reset = Time.now.to_i + 90
+      http = FakeNetHttp.new(response(Net::HTTPForbidden, "403", "{}",
+                                      "x-ratelimit-remaining" => "0", "x-ratelimit-reset" => reset.to_s))
+
+      error = assert_raises(Repo::TransientError) do
+        ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+      end
+
+      assert_in_delta 90, error.retry_after, 2
+    end
+
+    test "espera longa demais para o retry vira nil (o backoff do job decide)" do
+      reset = Time.now.to_i + 3600
+      http = FakeNetHttp.new(response(Net::HTTPForbidden, "403", "{}",
+                                      "x-ratelimit-remaining" => "0", "x-ratelimit-reset" => reset.to_s))
+
+      error = assert_raises(Repo::TransientError) do
+        ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+      end
+
+      assert_nil error.retry_after
+    end
+
+    test "5xx é transitório" do
+      http = FakeNetHttp.new(response(Net::HTTPServiceUnavailable, "503", "{}"))
+
+      assert_raises(Repo::TransientError) do
+        ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+      end
+    end
+
+    test "erro de rede e timeout são transitórios" do
+      [ Errno::ECONNRESET.new, Net::OpenTimeout.new("tempo esgotado") ].each do |failure|
+        http = FakeNetHttp.new(failure)
+
+        assert_raises(Repo::TransientError) do
+          ScriptedGithubApi.new(http).repository(owner: "o", name: "r")
+        end
+      end
+    end
+
+    test "erro de rede no download também é transitório" do
+      http = FakeNetHttp.new(Errno::ECONNRESET.new)
+
+      assert_raises(Repo::TransientError) do
+        ScriptedGithubApi.new(http).download_tarball(owner: "o", name: "r", sha: "abc",
+                                                     destination: File.join(@dir, "t.tar.gz"), max_bytes: 100)
+      end
     end
 
     test "commit_sha codifica o branch e lê o sha" do
